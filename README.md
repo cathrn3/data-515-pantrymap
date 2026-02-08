@@ -8,8 +8,8 @@
 ## Team Members
 - Stuti Gaonkar
 - Sowmya Dhadheech
-- Catherine
-- Jolene 
+- Catherine Wu
+- Jolene Pern
 
 ## Project Type
 **Research Project**
