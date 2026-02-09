@@ -24,26 +24,16 @@
    - How should visual, textual, and audio signals be weighted and combined for medical assessment?
    - What architectures best capture cross-modal relationships in health data?
 
-3. **Can AI-powered preliminary screening reduce healthcare disparities?**
-   - How effective is remote AI-assisted triage in underserved communities?
-
-4. **How can agentic AI systems orchestrate complex medical workflows?**
-   - Can autonomous agents effectively route patients based on multimodal symptom analysis?
-
 ## Project Goal & Output
 
-We will produce a **multimodal agentic AI system** that allows patients to describe symptoms using:
+We will produce a **multimodal health assistant web application** that allows patients to describe symptoms using:
 - **Text** - Natural language symptom descriptions
 - **Images** - Photos of skin conditions or injuries  
 - **Voice** - Audio recordings for cough analysis
 
 **Deliverables:**
 - Multimodal health assistant web application
-- Agentic AI pipeline for data orchestration using Vertex AI
-- Preliminary health assessment and personalized health insights
 - Research findings on multimodal fusion for healthcare
-
-This system demonstrates true multimodal fusion by processing visual, textual, and audio data simultaneously to provide preliminary assessments and relevant medical information.
 
 ## Data Sources
 
