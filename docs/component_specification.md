@@ -1,0 +1,57 @@
+# Use case 1: System displays accurate map of operational food banks and meals matching user needs
+- Name: mapDisplay
+    - What it does: Displays food bank locations and transit routes on an interactive map
+    - Inputs:
+        - Map events (ie. click, zoom, etc)
+        - User filters, a dictionary specifying the values to filter on
+        - Food bank location data, a filtered array of objects specifying the food bank ids and corresponding GIS data -- see getFoodBank component
+        - Bus route location data, an array of objects specifying the transit route ids and corresponding GIS data -- see getBusRoutes component
+    - Outputs:
+        - Map object (ie. OpenLayers map instance)
+    - Assumptions: Input data is filtered and valid
+    - Potential libraries: Openlayers, OpenStreetMaps
+- Name: foodBankDisplay
+    - What it does: Displays detailed text information about food banks in a side pane
+    - Inputs:
+        - Food bank information, a filtered array of objects specifying the food bank ids and additional details
+    - Outputs:
+        - Rendered list of food banks with detailed information
+    - Assumptions: None
+- Name: getFoodBanks (control logic)
+    - What it does: Retrieves and filters food bank data from a static datastore
+    - Inputs:
+        - User filters, a dictionary specifying the values to filter on
+    - Outputs:
+        - An array of objects specifying the food bank ids and corresponding GIS data + food bank details
+    - Assumptions: Filters are valid
+- Name: getBusRoutes (control logic)
+    - What it does: Retrieves bus route from a static datastore for a given food bank
+    - Input:
+        - Food bank location, a dictionary specifying the latitude and longitude
+    - Output:
+        - An array of objects specifying the available transit route ids and corresponding GIS data
+    - Assumptions: Filters are valid
+
+# Use case 2
+- Name: mapDisplay
+    - See use case 1
+- Name: foodBankDisplay
+    - See use case 1
+- Name: getFoodBanks (control logic)
+    - See use case 1
+- Name: getBusRoutes (control logic)
+    - See use case 1
+- Name: locationVerification
+    - What it does: Verifies that the address the user inputs is valid and in Seattle
+    - Input:
+        - User address, string
+    - Output:
+        - Boolean indicating whether the address is valid
+- Name: getNearestFoodBanks
+    - What it does: Fetches the 5 nearest food banks given an address
+    - Input:
+        - User address, string
+        - Food bank location data, an array of objects specifying the food bank ids and corresponding GIS data + food bank details -- see getFoodBanks component
+    - Output:
+        - An array of objects specifying the food bank ids and corresponding GIS data + food bank, filtered to 5 elements
+    - Assumptions: User address is valid and there are at least 5 food banks in the dataset
