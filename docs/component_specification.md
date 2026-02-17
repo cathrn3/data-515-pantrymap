@@ -32,7 +32,7 @@
         - An array of objects specifying the available transit route ids and corresponding GIS data
     - Assumptions: Filters are valid
 
-# Use case 2
+# Use case 2: System displays list of closest food banks and meals to a user based on user's location
 - Name: mapDisplay
     - See use case 1
 - Name: foodBankDisplay
@@ -48,7 +48,7 @@
     - Output:
         - Boolean indicating whether the address is valid
 - Name: getNearestFoodBanks
-    - What it does: Fetches the 5 nearest food banks given an address
+    - What it does: Calculates and returns the 5 nearest food banks given an address
     - Input:
         - User address, string
         - Food bank location data, an array of objects specifying the food bank ids and corresponding GIS data + food bank details -- see getFoodBanks component
