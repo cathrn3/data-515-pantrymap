@@ -21,16 +21,16 @@ During periods of uncertainty, emergency food banks and meal programs play a vit
 
 ## Use cases
 
-Objective: System displays accurate map of operational food banks and meals matching user needs
-User: accesses map
-System: displays all operational food banks and meals 
-User: selects a filter on type of food bank, operation time, or service requirements
-System: shows subset of locations on map
-User: selects an individual location
-System: shows more text information on that location, and displays public transportation routes to that location
+Objective: System displays accurate map of operational food banks and meals matching user needs \
+User: accesses map \
+System: displays all operational food banks and meals \
+User: selects a filter on type of food bank, operation time, or service requirements \
+System: shows subset of locations on map \
+User: selects an individual location \
+System: shows more text information on that location, and displays public transportation routes to that location \
 
-Objective: System displays list of closest food banks and meals to a user based on user's lcoation
-User: inputs location into search bar
-System: Highlights 5 closest food banks and meals to the user on the map, and displays list beside map
-User: selects an individual location
-System: shows more text information on that location, and displays public transportation routes to that location
+Objective: System displays list of closest food banks and meals to a user based on user's location \
+User: inputs location into search bar \
+System: Highlights 5 closest food banks and meals to the user on the map, and displays list beside map \
+User: selects an individual location \
+System: shows more text information on that location, and displays public transportation routes to that location \
