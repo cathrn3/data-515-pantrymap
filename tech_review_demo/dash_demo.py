@@ -46,7 +46,7 @@ app.layout = html.Div(
             placeholder="",
             debounce=True
         ),
-        dcc.Dropdown(food_banks["Who They Serve"].unique(), multi=True, id="filter"),
+        dcc.Dropdown(["All"] + list(food_banks["Who They Serve"].unique()), multi=True, id="filter", clearable=True, value=["All"]),
         html.Div(id="food bank"),
         html.Div(id="output address"),
     ]
@@ -65,11 +65,12 @@ def enter_address(value):
 
 @app.callback(Output("food banks", "data"), [Input("filter", "value")])
 def filter_foodbanks(value):
-    if value is not None:
-        mask = food_banks["Who They Serve"].isin(value)
-        filtered_food_banks = food_banks[mask]
-        updated_markers = filtered_food_banks[["lat", "lon", "Website"]].to_dict("records")
-        return dlx.dicts_to_geojson(updated_markers)
+    if value is None or "All" in value:
+        return geojson_foodbank_data
+    mask = food_banks["Who They Serve"].isin(value)
+    filtered_food_banks = food_banks[mask]
+    updated_markers = filtered_food_banks[["lat", "lon", "Website"]].to_dict("records")
+    return dlx.dicts_to_geojson(updated_markers)
 
 if __name__ == "__main__":
     app.run()
