@@ -1,6 +1,6 @@
 import dash_leaflet as dl
 import dash_leaflet.express as dlx
-from dash_extensions.enrich import DashProxy, Input, Output, html
+from dash_extensions.enrich import DashProxy, Input, Output, html, dcc
 import pandas as pd
 import hashlib
 
@@ -40,15 +40,36 @@ app.layout = html.Div(
             zoom=10,
             style={"height": "80vh"}
         ),
+        dcc.Input(
+            id="input address",
+            type="text",
+            placeholder="",
+            debounce=True
+        ),
+        dcc.Dropdown(food_banks["Who They Serve"].unique(), multi=True, id="filter"),
         html.Div(id="food bank"),
+        html.Div(id="output address"),
     ]
 )
 
 # Callbacks
 @app.callback(Output("food bank", "children"), [Input("food banks", "clickData")])
-def capital_click(feature):
+def food_bank_click(feature):
     if feature is not None:
         return f"Website for food bank clicked: {feature['properties']['Website']}"
+    
+@app.callback(Output("output address", "children"), [Input("input address", "value")])
+def enter_address(value):
+    if value is not None:
+        return f"Closest address to {value} is: TBD"
+
+@app.callback(Output("food banks", "data"), [Input("filter", "value")])
+def filter_foodbanks(value):
+    if value is not None:
+        mask = food_banks["Who They Serve"].isin(value)
+        filtered_food_banks = food_banks[mask]
+        updated_markers = filtered_food_banks[["lat", "lon", "Website"]].to_dict("records")
+        return dlx.dicts_to_geojson(updated_markers)
 
 if __name__ == "__main__":
     app.run()
