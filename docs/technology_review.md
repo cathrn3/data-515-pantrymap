@@ -22,6 +22,7 @@ In this technology review, we evaluate two Python libraries that provide robust 
 - Pros:
     - Open source and well documented; easy to use
     - Lightweight server setup
+    - Great support for geospatial data
     - Strong integration with Plotly maps and charts, allowing high-quality, visually rich plots with minimal effort
     - Binds interactive components (dropdowns, graphs, sliders, text inputs) with  Python code through "callbacks"
     - Easy to scale app up to hundreds of users
@@ -32,16 +33,18 @@ In this technology review, we evaluate two Python libraries that provide robust 
 
 ## Bokeh
 - Name: Bokeh
-- Author/Maintainer: Bokeh Developers (Continuum Analytics / Anaconda)
-- Summary: Bokeh is an open-source Python library for creating interactive visualizations and dashboards in the browser. It supports both standalone plots and full web applications via the Bokeh server, which maintains persistent Python sessions per user. Bokeh allows developers to build interactive maps, charts, and plots entirely in Python, with dynamic updates triggered by widget callbacks.
+- Author/Maintainer: Anaconda Inc. (maintained by the Bokeh development community)
+- Summary: Bokeh is an open-source, powerful Python visualization library and server framework for building interactive web applications. It enables developers to create sophisticated, enterprise-grade dashboards and geospatial applications entirely in Python with server-side rendering. Unlike client-side frameworks, Bokeh maintains persistent server sessions, making it ideal for complex applications requiring real-time computations, multi-step interactions, and stateful data management.
 - Pros:
     - Open source and well documented
     - ColumnDataSource and CDSView make filtering large datasets fast and memory-efficient
+    - Native support for geospatial data with integrated tile providers
     - Efficient for multi-step and per-user computations since Python state is maintained per session
     - Supports linking multiple visualizations to a single data source
     - Handles map tiles, markers, polylines, and dynamic updates efficiently
 - Cons:
     - Less beginner-friendly than Dash; more Python and Bokeh-specific concepts to learn
+    - Fewer pre-built UI components than Dash/Plotly ecosystem
     - Layouts and widget linking require more boilerplate and manual configuration
     - Running a server per user session can increase resource usage for large-scale deployments
 
