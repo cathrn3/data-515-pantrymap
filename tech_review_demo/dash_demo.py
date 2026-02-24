@@ -9,7 +9,9 @@ def color_from_id(route_id):
     hex_hash = hashlib.md5(str(route_id).encode()).hexdigest()
     return f"#{hex_hash[:6]}"
 
-# Format food bank markers
+############################
+#         Markers          #
+############################
 food_banks = pd.read_csv("../data/Emergency_Food_and_Meals_Seattle_and_King_County_20260222.csv")
 food_banks = food_banks.rename(columns={
     "Latitude": "lat",
@@ -18,7 +20,9 @@ food_banks = food_banks.rename(columns={
 markers = food_banks[["lat", "lon", "Website"]].to_dict("records")
 geojson_foodbank_data = dlx.dicts_to_geojson(markers)
 
-# Format transit routes
+############################
+#        Polylines         #
+############################
 transit_data = pd.read_csv("../data/shapes.txt")
 polylines = []
 for shape_id, group in transit_data.groupby("shape_id"):
@@ -26,43 +30,56 @@ for shape_id, group in transit_data.groupby("shape_id"):
     polyline = dl.Polyline(positions=coords, color=color_from_id(group["shape_id"]))
     polylines.append(polyline)
 
-# Dash app
+############################
+#          Setup           #
+############################
 app = DashProxy()
 app.layout = html.Div(
     [
         dl.Map(
             children=[
-                dl.TileLayer(),
-                dl.GeoJSON(data=geojson_foodbank_data, id="food banks"),
-                *polylines
+                dl.TileLayer(), # Default map tiles
+                dl.GeoJSON(data=geojson_foodbank_data, id="food banks"), # Markers
+                *polylines # Polylines
             ],
             center=[47.5, -122.4],
             zoom=10,
             style={"height": "80vh"}
         ),
-        dcc.Input(
+        dcc.Input( # User input
             id="input address",
             type="text",
             placeholder="",
             debounce=True
         ),
-        dcc.Dropdown(["All"] + list(food_banks["Who They Serve"].unique()), multi=True, id="filter", clearable=True, value=["All"]),
+        dcc.Dropdown( # Dropdown filter
+            ["All"] + list(food_banks["Who They Serve"].unique()),
+            multi=True,
+            id="filter",
+            clearable=True,
+            value=["All"]
+        ),
         html.Div(id="food bank"),
         html.Div(id="output address"),
     ]
 )
 
-# Callbacks
+############################
+#        Callbacks         #
+############################
+# Event handling (User clicks)
 @app.callback(Output("food bank", "children"), [Input("food banks", "clickData")])
 def food_bank_click(feature):
     if feature is not None:
         return f"Website for food bank clicked: {feature['properties']['Website']}"
-    
+
+# User inputs
 @app.callback(Output("output address", "children"), [Input("input address", "value")])
 def enter_address(value):
     if value is not None:
         return f"Closest address to {value} is: TBD"
 
+# Applying filters
 @app.callback(Output("food banks", "data"), [Input("filter", "value")])
 def filter_foodbanks(value):
     if value is None or "All" in value:
