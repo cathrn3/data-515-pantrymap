@@ -10,3 +10,4 @@ __pycache__/
 .ipynb_checkpoints/
 # Raw data
 data/
+.DS_Store
