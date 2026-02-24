@@ -37,21 +37,13 @@ TODO
 ## Comparison
 |  Feature    | Dash    | Bokeh(?)  |
 | ----------- | ----------- | ----------- |
-
-| Setup | Easy to initialize app. App layout is intuitive to set up, and adding multiple components to the dashboard is simple. |  |
-
+| Setup | Easy to initialize app. App layout is intuitive to set up, and adding multiple components to the dashboard is simple. |  
 | Data handling | Able to take dictionaries, lists and DataFrames, but there are no easy ways to connect graphs to the same underlying dataset. However, it has a deeper integration with DataFrames, allowing syntactic sugar such as automatic plot generation or data selection. | |
-
 | Map Rendering | Default tile layers are provided from dash-leaflet library. There is support for the option of using custom tiles as well. | |
-
 | Markers and Polylines | Markers and polylines can be added via dl.GeoJSON or dl.Polyline from coordinate (latitude and longitude) data. However, we noticed some minor latency in the demo when rendering multiple polylines. | |
-
 | Event handling | Uses Python callback functions decorated with @app.callback to react to user interactions. Events such as clicking a marker, selecting a dropdown value, or entering text in an input box can trigger reactive updates to components. The callback structure is clear but can become verbose when many inputs and outputs are connected. | |
-
 | Dashboard filters | Filters are typically implemented using dropdowns, checklists, sliders, or radio buttons. These components are easily integrated into callbacks to dynamically filter displayed data. Filtering logic must be handled manually in the callback, but the process is straightforward and fully customizable.| |
-
 | User inputs | Supports various input components including text inputs, dropdowns, sliders, and buttons. User inputs can trigger recomputation of data (e.g., calculating the 5 closest food banks) through callbacks. | |
-
 | Performance | Performs well for small - medium size datasets, but is less performant with large dataset. Each callback recomputes outputs, which can introduce latency for expensive calculations unless optimization techniques (e.g., memoization or caching) are used.| |
 
 ## Final choice
