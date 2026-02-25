@@ -119,6 +119,17 @@ def load_food_bank_data():
 # ============================================================================
 
 df = load_food_bank_data()[0]
+# Add color column to source based on accessibility score
+colors = []
+for score in df['accessibility_score']:
+    if score >= 80:
+        colors.append('#1a7f37')  # Green
+    elif score >= 60:
+        colors.append('#fb8500')  # Orange
+    else:
+        colors.append('#da3633')  # Red
+df['color'] = colors
+
 user_lat, user_lon = load_food_bank_data()[1], load_food_bank_data()[2]
 user_x, user_y = lat_lon_to_mercator(user_lat, user_lon)
 
@@ -262,7 +273,7 @@ map_fig = figure(
     y_axis_type="mercator",
     width=1000,
     height=800,
-    tools="pan,wheel_zoom,reset,save",
+    tools="pan,wheel_zoom,box_zoom,reset,save",
     toolbar_location="above",
     background_fill_color='#fafbfc',
     border_fill_color='#fafbfc',
@@ -275,18 +286,7 @@ map_fig.toolbar.logo = None
 map_fig.xgrid.visible = False
 map_fig.ygrid.visible = False
 map_fig.toolbar.active_drag = 'auto'
-
-# Add color column to source based on accessibility score
-colors = []
-for score in df['accessibility_score']:
-    if score >= 80:
-        colors.append('#1a7f37')  # Green
-    elif score >= 60:
-        colors.append('#fb8500')  # Orange
-    else:
-        colors.append('#da3633')  # Red
-
-source.data['color'] = colors
+print(source.data["color"])
 
 # Food bank markers - sized by accessibility score
 markers = map_fig.circle(
