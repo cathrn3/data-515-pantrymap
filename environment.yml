@@ -5,4 +5,4 @@ dependencies:
   - build
   - numpy
   - pylint
-  - python=3
+  - python=3.10
