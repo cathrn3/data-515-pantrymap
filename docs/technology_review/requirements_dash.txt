@@ -1,0 +1,4 @@
+dash==3.3.0
+dash-extensions==1.0.20
+dash-leaflet==1.0.15
+pandas==2.3.3
