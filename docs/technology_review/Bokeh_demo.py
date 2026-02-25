@@ -286,7 +286,6 @@ map_fig.toolbar.logo = None
 map_fig.xgrid.visible = False
 map_fig.ygrid.visible = False
 map_fig.toolbar.active_drag = 'auto'
-print(source.data["color"])
 
 # Food bank markers - sized by accessibility score
 markers = map_fig.circle(
@@ -376,6 +375,7 @@ location_list = Div(text=create_location_list())
 # ============================================================================
 
 def update():
+    # TODO: use CDSView to filter efficiently
     """Update all visualizations based on filters"""
     df_filtered = df.copy()
     
@@ -550,6 +550,7 @@ if __name__ == '__main__':
     print("\n To stop: Press Ctrl+C\n")
     print("="*70 + "\n")
     
+    # TODO: remove programmatic server startup
     webbrowser.open('http://localhost:5006/pantrymap_enhanced')
     subprocess.run(['/Users/stuti/Desktop/PantryMap/.venv/bin/python', '-m', 'bokeh', 
                    'serve', 'pantrymap_enhanced.py', '--port', '5006', '--allow-websocket-origin', 'localhost:5006'])
