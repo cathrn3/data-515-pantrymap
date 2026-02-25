@@ -6,3 +6,4 @@ dependencies:
   - numpy
   - pylint
   - python=3.10
+  - coverage
