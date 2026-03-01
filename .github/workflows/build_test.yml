@@ -109,7 +109,7 @@ jobs:
           # coveralls until all runs are done. If you don't have
           # a matrix, this isn't needed.
           flag-name: run-${{ join(matrix.*, ' - ') }}
-          parallel: true
+          parallel: false
 
   # After all the parallel matrix runs for build_test are done
   # for the various python versions, we run this job to send the
