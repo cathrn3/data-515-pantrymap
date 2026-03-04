@@ -1,8 +1,4 @@
-<<<<<<< HEAD
 coverage.lcov
 __pycache__/
 .coverage
-=======
-__pycache__/
 *.pyc
->>>>>>> 790a401 (refactor code)
