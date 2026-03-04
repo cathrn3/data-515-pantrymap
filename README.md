@@ -47,4 +47,9 @@ We will produce a web application that allows users to:
 - **Source:** Sound Transit - Open Transit Data (OTD) https://www.soundtransit.org/help-contacts/business-information/open-transit-data-otd/otd-downloads
 - **Use:** King County public transportation data
 
-
+### Development
+To run the service locally, run the following commands:
+1. `conda env create -n <env name> -f environment.yml`
+2. `conda activate <env name>`
+3. `pip install -e .`
+4. `bokeh serve src/pantry_map/main.py --show`
