@@ -1,6 +1,6 @@
 from bokeh.layouts import column, row
 from bokeh.models import MultiSelect, Div
-from src.utilities.constants import COLORS
+from pantry_map.utilities.constants import COLORS
 
 def create_sidebar(foodbank_df):
     # Dropdown filter
