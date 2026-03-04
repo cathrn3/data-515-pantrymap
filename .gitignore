@@ -1,3 +1,4 @@
 coverage.lcov
-__pycache__/
 .coverage
+__pycache__/
+*.pyc
