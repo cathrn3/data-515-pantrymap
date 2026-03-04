@@ -1,6 +1,6 @@
+from math import radians, sin, cos, sqrt, atan2, pi
 import hashlib
 import numpy as np
-from math import radians, sin, cos, sqrt, atan2, pi
 
 def color_from_id(route_id):
     """Generate a color from the route_id"""
@@ -16,10 +16,10 @@ def lat_lon_to_mercator(lat, lon):
 
 def calculate_distance(lat1, lon1, lat2, lon2):
     """Calculate distance in miles using Haversine formula"""
-    R = 3959
+    radius = 3959
     lat1, lon1, lat2, lon2 = map(radians, [lat1, lon1, lat2, lon2])
     dlat = lat2 - lat1
     dlon = lon2 - lon1
-    a = sin(dlat/2)**2 + cos(lat1) * cos(lat2) * sin(dlon/2)**2
-    c = 2 * atan2(sqrt(a), sqrt(1-a))
-    return round(R * c, 2)
+    a_value = sin(dlat/2)**2 + cos(lat1) * cos(lat2) * sin(dlon/2)**2
+    c_value = 2 * atan2(sqrt(a_value), sqrt(1-a_value))
+    return round(radius * c_value, 2)

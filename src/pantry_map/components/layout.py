@@ -17,7 +17,19 @@ def create_sidebar(foodbank_df):
     location_list = Div(text="", width=360)
 
     sidebar_layout = column(
-        Div(text="<div style='padding: 12px 0; font-size: 11px; font-weight: 700; text-transform: uppercase; color: #57606a; letter-spacing: 0.5px;'>Search & Filters</div>"),
+        Div(
+            text="""
+            <div style=
+                'padding: 12px 0;
+                font-size: 11px;
+                font-weight: 700;
+                text-transform: uppercase;
+                color: #57606a;
+                letter-spacing: 0.5px;
+            '>
+                Search & Filters
+            </div>"""
+        ),
         resource_type_dropdown,
         results_div,
         location_list,
