@@ -1,0 +1,9 @@
+name: ci_example
+channels:
+  - defaults
+dependencies:
+  - build
+  - numpy
+  - pylint
+  - python=3.10
+  - coverage
