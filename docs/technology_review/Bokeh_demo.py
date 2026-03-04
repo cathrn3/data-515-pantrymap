@@ -17,10 +17,15 @@ from datetime import datetime
 import webbrowser
 import subprocess
 import json
+import hashlib
 
 # ============================================================================
 # UTILITY FUNCTIONS
 # ============================================================================
+def color_from_id(route_id):
+    # Generate a color from the route_id
+    hex_hash = hashlib.md5(str(route_id).encode()).hexdigest()
+    return f"#{hex_hash[:6]}"
 
 def lat_lon_to_mercator(lat, lon):
     """Convert lat/lon to Web Mercator projection"""
@@ -273,7 +278,7 @@ map_fig = figure(
     y_axis_type="mercator",
     width=1000,
     height=800,
-    tools="pan,wheel_zoom,box_zoom,reset,save",
+    tools="pan,wheel_zoom,box_zoom,reset,save,zoom_in,zoom_out",
     toolbar_location="above",
     background_fill_color='#fafbfc',
     border_fill_color='#fafbfc',
@@ -286,6 +291,22 @@ map_fig.toolbar.logo = None
 map_fig.xgrid.visible = False
 map_fig.ygrid.visible = False
 map_fig.toolbar.active_drag = 'auto'
+
+# Drawing all routes, testing performance
+transit_routes = pd.read_csv("../../data/shapes.txt")
+transit_routes["x"] = transit_routes["shape_pt_lon"] * (6378137 * pi/180.0)
+transit_routes["y"] = np.log(np.tan((90 + transit_routes["shape_pt_lat"]) * pi/360.0)) * 6378137
+transit_df = transit_routes.groupby("shape_id").agg({"x": list, "y": list}).reset_index()
+transit_df["color"] = transit_df["shape_id"].apply(color_from_id)
+transit_source = ColumnDataSource(transit_df)
+
+map_fig.multi_line(
+    xs="x",
+    ys="y",
+    color="color",
+    source=transit_source,
+    line_width=2
+)
 
 # Food bank markers - sized by accessibility score
 markers = map_fig.circle(
