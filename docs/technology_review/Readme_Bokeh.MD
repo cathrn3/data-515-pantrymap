@@ -78,7 +78,7 @@ pip install -r requirements_bokeh.txt
 
 ### Development Mode
 ```bash
-bokeh serve docs/technology_review/Bokeh_demo.py --port 5006
+bokeh serve Bokeh_demo.py --port 5006
 ```
 
 ### Automatic Browser Opening
