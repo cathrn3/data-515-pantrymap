@@ -4,6 +4,7 @@ from pantry_map.data.loader import get_foodbank_df, get_transit_df
 from pantry_map.components.map import add_markers, add_routes, create_map
 from pantry_map.components.layout import create_sidebar, create_layout
 from pantry_map.filters.mask import get_foodbank_mask
+from pantry_map.utilities.utility import validate_address, geocode_address
 
 transit_df = get_transit_df()
 transit_source = ColumnDataSource(transit_df)
@@ -30,23 +31,31 @@ def update():
     foodbank_mask = get_foodbank_mask(foodbank_df, resource_types)
     foodbank_view.filter = BooleanFilter(foodbank_mask.tolist())
 
-# Address validation
-def validate_address(input_text):
-    """Validate that the address input is not empty."""
-    if not input_text.strip():
-        return False, "Address cannot be empty."
-    return True, ""
-
 # Search button callback
 def on_search_click():
-    """Handle click event for the search button."""
+    """
+    Handle click event for the search button.
+    
+    1. Validate address input
+    2. Geocode address to find longitude and latitude
+    3. Calculate 5 nearest foodbanks
+    """
     address = address_input.value
     is_valid, msg = validate_address(address)
+
     if not is_valid:
         sidebar_widgets["results_div"].text = f"<p style='color:red'>{msg}</p>"
         return
-    print(f"Searching for: {address}")
-    # TODO: Add geocoding + nearest-foodbanks logic
+    
+    lat, lon = geocode_address(address)
+    if lat is None or lon is None:
+        sidebar_widgets["results_div"].text = "<p style='color:red'>Could not find this address. Please try again.</p>"
+        return
+    
+    print(f"Valid address: {address} -> Lat: {lat}, Lon: {lon}")
+    sidebar_widgets["results_div"].text = f"<p>Valid address: {address}</p>"
+
+    # TODO: Add nearest-foodbanks logic
 
 resource_types.on_change("value", lambda attr, old, new: update())
 search_button.on_click(on_search_click)

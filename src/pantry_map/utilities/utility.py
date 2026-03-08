@@ -1,6 +1,7 @@
 from math import radians, sin, cos, sqrt, atan2, pi
 import hashlib
 import numpy as np
+from geopy.geocoders import Nominatim
 
 def color_from_id(route_id):
     """Generate a color from the route_id"""
@@ -23,3 +24,20 @@ def calculate_distance(lat1, lon1, lat2, lon2):
     a_value = sin(dlat/2)**2 + cos(lat1) * cos(lat2) * sin(dlon/2)**2
     c_value = 2 * atan2(sqrt(a_value), sqrt(1-a_value))
     return round(radius * c_value, 2)
+
+def validate_address(input_text):
+    """Validate that the address input is not empty."""
+    if not input_text.strip():
+        return False, "Address cannot be empty."
+    return True, ""
+
+def geocode_address(address):
+    """Convert a user-entered address into latitude and longitude using Geopy."""
+    geolocator = Nominatim(user_agent="pantrymap_app")
+    try:
+        location = geolocator.geocode(address)
+        if location is not None:
+            return location.latitude, location.longitude
+    except Exception as e:
+        print(f"Geocoding error: {e}")
+    return None, None
