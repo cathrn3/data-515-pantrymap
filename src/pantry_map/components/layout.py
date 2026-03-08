@@ -1,5 +1,5 @@
 from bokeh.layouts import column, row
-from bokeh.models import MultiSelect, Div
+from bokeh.models import MultiSelect, Div, TextInput, Button
 from pantry_map.utilities.constants import COLORS
 
 def create_sidebar(foodbank_df):
@@ -9,6 +9,10 @@ def create_sidebar(foodbank_df):
         value=options,
         options=options
     )
+
+    # Text input and search button for address input
+    address_input = TextInput(value="", title="Enter your address:")
+    search_button = Button(label="Search", button_type="primary")
 
     # TODO: Fill out sidebar
 
@@ -31,6 +35,8 @@ def create_sidebar(foodbank_df):
             </div>"""
         ),
         resource_type_dropdown,
+        address_input,
+        search_button,
         results_div,
         location_list,
         width=380,
@@ -40,6 +46,8 @@ def create_sidebar(foodbank_df):
     # Return both the layout and the widgets for callbacks
     return sidebar_layout, {
         "resource_type_dropdown": resource_type_dropdown,
+        "address_input": address_input,
+        "search_button": search_button,
         "results_div": results_div,
         "location_list": location_list,
     }
