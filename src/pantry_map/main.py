@@ -4,7 +4,7 @@ from pantry_map.data.loader import get_foodbank_df, get_transit_df
 from pantry_map.components.map import add_markers, add_routes, create_map
 from pantry_map.components.layout import create_sidebar, create_layout
 from pantry_map.filters.mask import get_foodbank_mask
-from pantry_map.utilities.utility import validate_address, geocode_address
+from pantry_map.utilities.utility import validate_address, geocode_address, find_nearest_foodbanks
 
 transit_df = get_transit_df()
 transit_source = ColumnDataSource(transit_df)
@@ -40,6 +40,8 @@ def on_search_click():
     2. Geocode address to find longitude and latitude
     3. Calculate 5 nearest foodbanks
     """
+
+    # validate address input
     address = address_input.value
     is_valid, msg = validate_address(address)
 
@@ -47,15 +49,19 @@ def on_search_click():
         sidebar_widgets["results_div"].text = f"<p style='color:red'>{msg}</p>"
         return
     
+    # get lat and lon
     lat, lon = geocode_address(address)
     if lat is None or lon is None:
         sidebar_widgets["results_div"].text = "<p style='color:red'>Could not find this address. Please try again.</p>"
         return
     
-    print(f"Valid address: {address} -> Lat: {lat}, Lon: {lon}")
-    sidebar_widgets["results_div"].text = f"<p>Valid address: {address}</p>"
+    # calc nearest foodbanks
+    nearest_df = find_nearest_foodbanks(foodbank_df, lat, lon, k=5)
+    
+    # highlight nearest markers on the map
+    nearest_mask = foodbank_df.index.isin(nearest_df.index)
+    foodbank_view.filter = BooleanFilter(nearest_mask.tolist())
 
-    # TODO: Add nearest-foodbanks logic
 
 resource_types.on_change("value", lambda attr, old, new: update())
 search_button.on_click(on_search_click)
