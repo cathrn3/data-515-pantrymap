@@ -9,7 +9,7 @@ class TestNearestFoodbanks(unittest.TestCase):
         """Create a tiny mock foodbank DataFrame for testing."""
         self.foodbanks = pd.DataFrame({
             'Name': ['A', 'B', 'C'],
-            'Latitude': [0, 0, 1],   # simple coordinates
+            'Latitude': [0, 0, 1],   
             'Longitude': [0, 1, 0]
         })
 
