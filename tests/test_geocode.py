@@ -26,11 +26,13 @@ class TestGeocode(unittest.TestCase):
 
     def test_known_location(self):
         """Test that a known location returns valid latitude and longitude."""
-        lat, lon = geocode_address("Seattle WA")
+        
+        lat, lon = geocode_address("85 Pike St. Seattle WA")
         self.assertIsNotNone(lat)
         self.assertIsNotNone(lon)
         self.assertTrue(-180 <= lon <= 180)
         self.assertTrue(-90 <= lat <= 90)
+        print(lat, lon)
 
     def test_invalid_location(self):
         """Test that an invalid address returns None."""
