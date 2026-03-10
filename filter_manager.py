@@ -91,16 +91,27 @@ class FilterManager:
         
         # Sort by distance by default
         self.filtered_data = self.filtered_data.sort_values('distance')
-    
-    def filter_by_distance(self, max_distance):
+
+    def filter_by_distance(self, max_distance: float) -> 'FilterManager':
         """
         Filter by maximum distance.
         
         Parameters:
         -----------
         max_distance : float
-            Maximum distance in miles
+            Maximum distance in miles. Must be positive.
+
+        Returns
+        -------
+        FilterManager
+            Self for method chaining
+        
+        Examples
+        --------
+        >>> manager.filter_by_distance(5.0)  # Within 5 miles
+        >>> manager.filter_by_distance(10.5)  # Within 10.5 miles
         """
+    
         if 'distance' not in self.filtered_data.columns:
             return self
         
