@@ -45,11 +45,29 @@ class FilterManager:
         self._user_location = (lat, lng)
         self._calculate_distances()
         return self
-    
+
+
     def _calculate_distances(self):
-        """Calculate haversine distance from user to all food banks."""
+        """Calculate haversine distance using vectorized operations."""
         if self._user_location is None:
-            return
+           return
+    
+        user_lat, user_lng = self._user_location
+        R = 3959  # Earth radius in miles
+    
+        # Vectorized calculation
+        lat1, lon1 = np.radians(user_lat), np.radians(user_lng)
+        lat2 = np.radians(self.filtered_data['latitude'].values)
+        lon2 = np.radians(self.filtered_data['longitude'].values)
+    
+        dlat = lat2 - lat1
+        dlon = lon2 - lon1
+    
+        a = np.sin(dlat/2)**2 + np.cos(lat1) * np.cos(lat2) * np.sin(dlon/2)**2
+        c = 2 * np.arcsin(np.sqrt(a))
+    
+        self.filtered_data['distance'] = R * c
+        self.filtered_data = self.filtered_data.sort_values('distance')
         
         user_lat, user_lng = self._user_location
         
