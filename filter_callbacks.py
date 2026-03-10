@@ -121,7 +121,11 @@ class FilterCallbacks:
     # Callback functions
     def _on_filter_change(self, attr, old, new):
         """Called when any filter widget changes."""
-        self._apply_all_filters()
+        try:
+            self._apply_all_filters()
+        except Exception as e:
+            print(f" Filter error: {e}")
+
     
     def _on_reset(self):
         """Called when reset button is clicked."""
