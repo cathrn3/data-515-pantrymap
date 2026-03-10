@@ -11,7 +11,7 @@ class FilterManager:
     def __init__(self, data):
         """
         Initialize with food bank DataFrame.
-        
+    
         Parameters:
         -----------
         data : pd.DataFrame
