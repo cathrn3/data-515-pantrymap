@@ -2,7 +2,7 @@ from bokeh.io import curdoc
 from bokeh.models import ColumnDataSource, CDSView, BooleanFilter
 from pantry_map.data.loader import get_foodbank_df, get_transit_df
 from pantry_map.components.map import add_markers, add_routes, create_map
-from pantry_map.components.layout import create_sidebar, create_layout
+from pantry_map.components.layout import create_sidebar, create_layout, render_foodbank_cards
 from pantry_map.filters.mask import get_foodbank_mask
 from pantry_map.utilities.utility import validate_address, geocode_address, find_nearest_foodbanks
 
@@ -30,15 +30,21 @@ def update():
     # Update the displayed view instead of modifying the underlying data
     foodbank_mask = get_foodbank_mask(foodbank_df, resource_types)
     foodbank_view.filter = BooleanFilter(foodbank_mask.tolist())
+    # Refresh the side-panel cards to match the current filter
+    filtered_df = foodbank_df[foodbank_mask]
+    sidebar_widgets["location_list"].text = render_foodbank_cards(
+        filtered_df,
+        title=f"Filtered food banks ({len(filtered_df)})"
+    )
 
-# Search button callback
 def on_search_click():
     """
     Handle click event for the search button.
-    
+
     1. Validate address input
     2. Geocode address to find longitude and latitude
     3. Calculate 5 nearest foodbanks
+    4. Populate the side panel with card details
     """
 
     # validate address input
@@ -48,19 +54,28 @@ def on_search_click():
     if not is_valid:
         sidebar_widgets["results_div"].text = f"<p style='color:red'>{msg}</p>"
         return
-    
+
     # get lat and lon
     lat, lon = geocode_address(address)
     if lat is None or lon is None:
         sidebar_widgets["results_div"].text = "<p style='color:red'>Could not find this address. Please try again.</p>"
         return
-    
+
+    # clear any previous error
+    sidebar_widgets["results_div"].text = ""
+
     # calc nearest foodbanks
     nearest_df = find_nearest_foodbanks(foodbank_df, lat, lon, k=5)
-    
+
     # highlight nearest markers on the map
     nearest_mask = foodbank_df.index.isin(nearest_df.index)
     foodbank_view.filter = BooleanFilter(nearest_mask.tolist())
+
+    # populate the side panel with cards showing phone, rating, hours, distance
+    sidebar_widgets["location_list"].text = render_foodbank_cards(
+        nearest_df,
+        title=f"5 nearest food banks"
+    )
 
 
 resource_types.on_change("value", lambda attr, old, new: update())
