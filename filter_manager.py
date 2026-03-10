@@ -123,7 +123,7 @@ class FilterManager:
         """
         if open_only and 'operational_status' in self.filtered_data.columns:
             self.filtered_data = self.filtered_data[
-                self.filtered_data['operational_status'].str.lower() == 'open'
+                self.filtered_data['operational_status'].str.strip().str.lower() == 'open'
             ]
         
         return self
