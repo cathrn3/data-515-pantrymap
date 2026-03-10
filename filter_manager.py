@@ -171,7 +171,7 @@ class FilterManager:
             ]
         
         return self
-    
+
     def filter_by_days(self, selected_days):
         """
         Filter by days of operation.
@@ -185,20 +185,30 @@ class FilterManager:
             return self
         
         if 'days_hours' in self.filtered_data.columns:
+            day_patterns = {
+                'Monday': ['monday', 'mon'],
+                'Tuesday': ['tuesday', 'tues', 'tue'],
+                'Wednesday': ['wednesday', 'wed'],
+                'Thursday': ['thursday', 'thurs', 'thu'],
+                'Friday': ['friday', 'fri'],
+                'Saturday': ['saturday', 'sat'],
+                'Sunday': ['sunday', 'sun']
+            }
+        
             def open_on_days(days_hours_text):
                 if pd.isna(days_hours_text):
                     return False
-                
-                days_text = str(days_hours_text).lower()
-                
-                # Check if any selected day appears in the text
-                # Use first 3 letters to match abbreviations (Mon, Tue, etc.)
-                return any(day[:3].lower() in days_text for day in selected_days)
             
-            self.filtered_data = self.filtered_data[
-                self.filtered_data['days_hours'].apply(open_on_days)
-            ]
+                days_text = str(days_hours_text).lower()
+                return any(
+                    any(pattern in days_text for pattern in day_patterns.get(day, []))
+                    for day in selected_days
+                )
         
+        self.filtered_data = self.filtered_data[
+            self.filtered_data['days_hours'].apply(open_on_days)
+        ]
+    
         return self
     
     def filter_by_search(self, search_text):
