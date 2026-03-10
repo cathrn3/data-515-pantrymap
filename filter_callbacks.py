@@ -48,7 +48,7 @@ class FilterCallbacks:
         # Reset button
         self.widgets.reset_button.on_click(self._on_reset)
         
-        print("✅ All callbacks attached successfully")
+        print(" All callbacks attached successfully")
     
     def _apply_all_filters(self):
         """Apply all active filters in sequence."""
@@ -89,10 +89,21 @@ class FilterCallbacks:
         # Update display
         self._update_map()
         self._update_results_count()
-    
+
+
     def _update_map(self):
         """Update map data source with filtered results."""
-        filtered_df = self.filter_manager.get_data()
+        filtered_df = self.filter_manager.get_data().copy()
+
+        # Recalculate Mercator coordinates for filtered data
+        if len(filtered_df) > 0 and 'latitude' in filtered_df.columns:
+            from interated_main import lat_lng_to_mercator
+            mercator_coords = filtered_df.apply(
+                lambda row: lat_lng_to_mercator(row['latitude'], row['longitude']),
+                axis=1
+            )
+            filtered_df['mercator_x'] = [coord[0] for coord in mercator_coords]
+            filtered_df['mercator_y'] = [coord[1] for coord in mercator_coords]
         
         # Convert DataFrame to dictionary for ColumnDataSource
         new_data = {}
