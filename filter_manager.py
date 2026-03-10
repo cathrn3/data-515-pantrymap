@@ -18,6 +18,7 @@ class FilterManager:
             Food bank data with Seattle Open Data columns
         """
         self.original_data = data.copy()
+        self.original_data.columns = self.original_data.columns.str.lower().str.replace(' ', '_').str.replace('/', '_')
         self.filtered_data = data.copy()
         self._user_location = None
         
