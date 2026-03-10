@@ -4,6 +4,7 @@ from pantry_map.data.loader import get_foodbank_df, get_transit_df
 from pantry_map.components.map import add_markers, add_routes, create_map
 from pantry_map.components.layout import create_sidebar, create_layout
 from pantry_map.filters.mask import get_foodbank_mask
+from pantry_map.utilities.utility import validate_address, geocode_address, find_nearest_foodbanks
 
 transit_df = get_transit_df()
 transit_source = ColumnDataSource(transit_df)
@@ -22,13 +23,48 @@ add_markers(map_fig, foodbank_source, view=foodbank_view)
 
 sidebar_layout, sidebar_widgets = create_sidebar(foodbank_df)
 resource_types = sidebar_widgets['resource_type_dropdown']
+address_input = sidebar_widgets['address_input']
+search_button = sidebar_widgets['search_button']
 
 def update():
     # Update the displayed view instead of modifying the underlying data
     foodbank_mask = get_foodbank_mask(foodbank_df, resource_types)
     foodbank_view.filter = BooleanFilter(foodbank_mask.tolist())
 
+# Search button callback
+def on_search_click():
+    """
+    Handle click event for the search button.
+    
+    1. Validate address input
+    2. Geocode address to find longitude and latitude
+    3. Calculate 5 nearest foodbanks
+    """
+
+    # validate address input
+    address = address_input.value
+    is_valid, msg = validate_address(address)
+
+    if not is_valid:
+        sidebar_widgets["results_div"].text = f"<p style='color:red'>{msg}</p>"
+        return
+    
+    # get lat and lon
+    lat, lon = geocode_address(address)
+    if lat is None or lon is None:
+        sidebar_widgets["results_div"].text = "<p style='color:red'>Could not find this address. Please try again.</p>"
+        return
+    
+    # calc nearest foodbanks
+    nearest_df = find_nearest_foodbanks(foodbank_df, lat, lon, k=5)
+    
+    # highlight nearest markers on the map
+    nearest_mask = foodbank_df.index.isin(nearest_df.index)
+    foodbank_view.filter = BooleanFilter(nearest_mask.tolist())
+
+
 resource_types.on_change("value", lambda attr, old, new: update())
+search_button.on_click(on_search_click)
 
 layout = create_layout(
     map_fig,
