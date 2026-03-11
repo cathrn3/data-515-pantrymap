@@ -81,6 +81,9 @@ jobs:
       
       # If there are any other steps in order for your tests to
       # run successfully, you can add those steps here!
+      - name: Install package
+        run: |
+          pip install -e .
 
       # Next step: run the unit tests with code coverage.
       - name: Unit tests
