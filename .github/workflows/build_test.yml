@@ -81,9 +81,9 @@ jobs:
       
       # If there are any other steps in order for your tests to
       # run successfully, you can add those steps here!
-      - name: Install package
+      - name: Add project to PYTHONPATH
         run: |
-          pip install -e .
+          export PYTHONPATH=$PYTHONPATH:$(pwd)
 
       # Next step: run the unit tests with code coverage.
       - name: Unit tests
