@@ -26,10 +26,22 @@ def calculate_distance(lat1, lon1, lat2, lon2):
     c_value = 2 * atan2(sqrt(a_value), sqrt(1-a_value))
     return round(radius * c_value, 2)
 
+#TODO: add an if else checking if seattle is in the text, if not, add it
+#also check if its in seattle, maybe add a red icon for user
 def validate_address(input_text):
-    """Validate that the address input is not empty."""
-    if not input_text.strip():
-        return False, "Address cannot be empty."
+    """"Validate that the address input is not empty."""
+
+    # Remove leading/trailing whitespace
+    address = input_text.strip()
+
+    # Check for empty input
+    if not address:
+        return False, "Address cannot be empty.", None
+
+    # Ensure the address includes Seattle to increase searching accuracy
+    if "seattle" not in address.lower():
+        address = f"{address}, Seattle, WA"
+
     return True, ""
 
 def geocode_address(address):
@@ -38,7 +50,15 @@ def geocode_address(address):
     try:
         location = geolocator.geocode(address)
         if location is not None:
-            return location.latitude, location.longitude
+            lat = location.latitude
+            lon = location.longitude
+
+            # Seattle region bounds
+            if not (47.0 <= lat <= 48.0 and -123.0 <= lon <= -121.5):
+                print("Address is outside the Seattle area.")
+                return None, None
+
+            return lat, lon
     except Exception as e:
         print(f"Geocoding error: {e}")
     return None, None
