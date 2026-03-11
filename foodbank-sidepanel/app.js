@@ -8,16 +8,7 @@ const MAX_NEARBY = 10;          // how many banks to show when address is entere
 const DEFAULT_CENTER = [47.4969, -122.0492]; // King/Pierce County area
 const DEFAULT_ZOOM   = 10;
 
-// Simulated ratings (column not in CSV — we generate them once per resource)
-const ratingCache = {};
-function getRating(id) {
-  if (!ratingCache[id]) {
-    // Seeded pseudo-random so results stay stable across re-renders
-    const seed = id.split('').reduce((a, c) => a + c.charCodeAt(0), 0);
-    ratingCache[id] = +(3 + ((seed * 9301 + 49297) % 233280) / 233280 * 2).toFixed(1);
-  }
-  return ratingCache[id];
-}
+
 
 // ── STATE ────────────────────────────────────────────────
 let allFoodBanks  = [];     // full dataset
@@ -85,7 +76,7 @@ function loadData() {
           website:   r['Website']           || '',
           hours:     r['Days/Hours']        || '',
           updated:   r['Date Updated']      || '',
-          rating:    getRating(`fb-${i}-${r['Location']}`),
+
           distance:  null
         }));
 
@@ -185,7 +176,7 @@ function renderCards(banks) {
   const sortedBanks = [...banks];
   const mode = sortSelect.value;
   if (mode === 'name')     sortedBanks.sort((a,b) => a.agency.localeCompare(b.agency));
-  if (mode === 'rating')   sortedBanks.sort((a,b) => b.rating - a.rating);
+
   if (mode === 'distance') sortedBanks.sort((a,b) => {
     if (a.distance === null && b.distance === null) return 0;
     if (a.distance === null) return 1;
@@ -226,7 +217,6 @@ function buildCard(b) {
                    : b.type.includes('food bank') ? 'Food Bank'
                    : 'Meal Program';
 
-  const stars = buildStars(b.rating);
   const distHtml = b.distance !== null
     ? `<span class="distance-chip">📍 ${b.distance.toFixed(1)} mi</span>` : '';
 
@@ -248,8 +238,6 @@ function buildCard(b) {
         <span class="card-badge ${badgeCls}">${badgeLabel}</span>
       </div>
       <div class="card-row">
-        <div class="rating-stars">${stars}</div>
-        <span class="rating-num">${b.rating.toFixed(1)}</span>
         ${distHtml}
       </div>
       <div class="card-row">${statusHtml}</div>
@@ -259,15 +247,7 @@ function buildCard(b) {
     </div>`;
 }
 
-function buildStars(rating) {
-  let html = '';
-  for (let i = 1; i <= 5; i++) {
-    if (rating >= i)        html += '<span class="star filled">★</span>';
-    else if (rating > i-1)  html += '<span class="star half">★</span>';
-    else                    html += '<span class="star">★</span>';
-  }
-  return html;
-}
+
 
 // ── FOCUS / PAN TO BANK ───────────────────────────────────
 function focusBank(b) {
@@ -350,16 +330,14 @@ function addUserMarker(coords, label) {
 function buildPopup(b) {
   const phone   = b.phone   ? `<div class="popup-row"><span>📞</span><span>${b.phone}</span></div>` : '';
   const hours   = b.hours   ? `<div class="popup-row"><span>🕐</span><span>${b.hours}</span></div>` : '';
-  const stars   = buildStars(b.rating);
-  const distTxt = b.distance !== null ? ` · ${b.distance.toFixed(1)} mi away` : '';
+  const distTxt = b.distance !== null ? `${b.distance.toFixed(1)} mi away` : '';
   const website = b.website ? `<div class="popup-row"><span>🌐</span><a href="${b.website}" target="_blank" rel="noreferrer">Visit website</a></div>` : '';
 
   return `
     <div style="font-family:'Inter',sans-serif;">
       <div class="popup-name">${b.location || b.agency}</div>
       <div class="popup-row" style="margin-bottom:4px;">
-        <span style="display:flex;gap:2px;">${stars}</span>
-        <span style="color:#8b949e;font-size:11px;">${b.rating.toFixed(1)}${distTxt}</span>
+        <span style="color:#8b949e;font-size:11px;">${distTxt}</span>
       </div>
       ${phone}
       ${hours}

@@ -4,18 +4,7 @@ from pantry_map.utilities.constants import COLORS
 import math
 
 
-# ── Helper: render star rating as HTML ──────────────────────────────────────
-def _stars_html(rating):
-    """Return filled/empty star HTML for a 0-5 float rating."""
-    html = ""
-    for i in range(1, 6):
-        if rating >= i:
-            html += "<span style='color:#f59e0b;'>&#9733;</span>"
-        elif rating > i - 1:
-            html += "<span style='color:#f59e0b;opacity:0.5;'>&#9733;</span>"
-        else:
-            html += "<span style='color:#d1d5db;'>&#9733;</span>"
-    return html
+
 
 
 # ── Helper: badge colour by type ────────────────────────────────────────────
@@ -78,12 +67,10 @@ def render_foodbank_cards(df, title=None):
         address = str(row_data.get("Address", "")).strip()
         status  = str(row_data.get("Operational Status", "open")).lower()
 
-        # Simulated rating (seeded on name so it's stable)
-        seed = sum(ord(c) for c in name)
-        rating = round(3.0 + ((seed * 9301 + 49297) % 233280) / 233280 * 2, 1)
+
 
         badge_style, badge_label = _badge_style(rtype)
-        stars = _stars_html(rating)
+
 
         # Distance chip
         dist_html = ""
@@ -153,8 +140,7 @@ def render_foodbank_cards(df, title=None):
             </div>
             <!-- Rating + distance + status -->
             <div style='display:flex;align-items:center;flex-wrap:wrap;gap:4px;margin-bottom:2px;'>
-                <span>{stars}</span>
-                <span style='font-size:12px;color:#57606a;margin-left:3px;'>{rating:.1f}</span>
+
                 {dist_html}
                 <span style='margin-left:auto;font-size:11px;font-weight:500;display:flex;align-items:center;gap:4px;'>
                     <span style='width:7px;height:7px;border-radius:50%;background:{dot_color};display:inline-block;'></span>

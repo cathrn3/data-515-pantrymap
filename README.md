@@ -53,3 +53,4 @@ To run the service locally, run the following commands:
 2. `conda activate <env name>`
 3. `pip install -e .`
 4. `bokeh serve src/pantry_map/main.py --show`
+5. `PYTHONPATH=src bokeh serve src/pantry_map/main.py --port 5006`
