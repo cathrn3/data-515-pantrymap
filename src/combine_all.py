@@ -17,7 +17,6 @@ final_data = pd.merge(trip_stop_times, stops, on="stop_id", how="left")
 
 # Check result
 print(final_data.head())
-print("TEST",final_data[final_data['route_id']=='102619'])
 
 # Save if needed
 final_data.to_csv("./processed/joined_transit_data.csv", index=False)
