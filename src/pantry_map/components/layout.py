@@ -13,6 +13,7 @@ def create_sidebar(foodbank_df):
     # Text input and search button for address input
     address_input = TextInput(value="", title="Enter your address:")
     search_button = Button(label="Search", button_type="primary")
+    clear_button = Button(label="Clear", button_type="light")
 
     # TODO: Fill out sidebar
 
@@ -37,6 +38,7 @@ def create_sidebar(foodbank_df):
         resource_type_dropdown,
         address_input,
         search_button,
+        clear_button,
         results_div,
         location_list,
         width=380,
@@ -48,6 +50,7 @@ def create_sidebar(foodbank_df):
         "resource_type_dropdown": resource_type_dropdown,
         "address_input": address_input,
         "search_button": search_button,
+        "clear_button": clear_button,
         "results_div": results_div,
         "location_list": location_list,
     }

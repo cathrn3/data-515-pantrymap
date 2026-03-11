@@ -25,6 +25,7 @@ sidebar_layout, sidebar_widgets = create_sidebar(foodbank_df)
 resource_types = sidebar_widgets['resource_type_dropdown']
 address_input = sidebar_widgets['address_input']
 search_button = sidebar_widgets['search_button']
+clear_button = sidebar_widgets['clear_button']
 
 def update():
     # Update the displayed view instead of modifying the underlying data
@@ -38,7 +39,8 @@ def on_search_click():
     
     1. Validate address input
     2. Geocode address to find longitude and latitude
-    3. Calculate 5 nearest foodbanks
+    3. Highlight user's location
+    4. Calculate 5 nearest foodbanks
     """
 
     # validate address input
@@ -62,9 +64,26 @@ def on_search_click():
     nearest_mask = foodbank_df.index.isin(nearest_df.index)
     foodbank_view.filter = BooleanFilter(nearest_mask.tolist())
 
+def on_clear_click():
+    """Handle click event for clear.
+    
+    1. Resets map
+    2. Clears input in search bar
+    """
+
+    # Reset map markers to show all foodbanks
+    reset_mask = [True] * len(foodbank_df)
+    foodbank_view.filter = BooleanFilter(reset_mask)
+
+    # Clear the address input box
+    address_input.value = ""
+
+    # Clear results message
+    sidebar_widgets["results_div"].text = ""
 
 resource_types.on_change("value", lambda attr, old, new: update())
 search_button.on_click(on_search_click)
+clear_button.on_click(on_clear_click)
 
 layout = create_layout(
     map_fig,
