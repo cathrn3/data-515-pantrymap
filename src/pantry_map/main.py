@@ -1,12 +1,16 @@
 from bokeh.io import curdoc
-from bokeh.models import ColumnDataSource, CDSView, BooleanFilter
-from pantry_map.data.loader import get_foodbank_df, get_shapes_df
-from pantry_map.components.map import add_markers, add_routes, create_map
+from bokeh.models import ColumnDataSource, CDSView, BooleanFilter, Label
+from pantry_map.data.loader import get_foodbank_df, get_shapes_df, get_transit_df, get_transfers_df
+from pantry_map.components.map import add_markers, add_routes, create_map, add_stops
 from pantry_map.components.layout import create_sidebar, create_layout
 from pantry_map.filters.mask import get_foodbank_mask
+from services.route import calculateRoute
 
-transit_df = get_shapes_df()
-transit_source = ColumnDataSource(transit_df)
+shapes_df, grouped_shapes_df = get_shapes_df()
+grouped_shapes_source = ColumnDataSource(grouped_shapes_df)
+
+transit_df = get_transit_df()
+transfers_df = get_transfers_df()
 
 foodbank_df = get_foodbank_df()
 foodbank_initial_mask = [True] * len(foodbank_df)
@@ -16,9 +20,21 @@ foodbank_view = CDSView(filter=BooleanFilter(foodbank_initial_mask))
 x_min, x_max = foodbank_df['x'].min(), foodbank_df['x'].max()
 y_min, y_max = foodbank_df['y'].min(), foodbank_df['y'].max()
 
+route_planner = calculateRoute(foodbank_df, transit_df, transfers_df)
+# TODO: set this to be interactive
+user_location = (47.815868, -122.294293)
+route_planner.set_user_location(user_location)
+food_bank_id = 'foodbank14'
+est_time, route = route_planner.get_route_to_destination(food_bank_id)
+
 map_fig = create_map(x_min, x_max, y_min, y_max)
-add_routes(map_fig, transit_source)
+add_routes(map_fig, grouped_shapes_source)
 add_markers(map_fig, foodbank_source, view=foodbank_view)
+foodbank_loc = tuple(foodbank_df[foodbank_df['bank_id']==food_bank_id][['Latitude', 'Longitude']].values[0])
+add_stops(map_fig, user_location, route, foodbank_loc, shapes_df)
+# TODO: Render route and estimated time nicely
+label = Label(x=70, y=70, x_units='screen', y_units='screen', text=str(est_time))
+map_fig.add_layout(label)
 
 sidebar_layout, sidebar_widgets = create_sidebar(foodbank_df)
 resource_types = sidebar_widgets['resource_type_dropdown']

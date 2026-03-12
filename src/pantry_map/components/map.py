@@ -1,4 +1,6 @@
 from bokeh.plotting import figure
+from bokeh.models import HoverTool
+from pantry_map.utilities.utility import lat_lon_to_mercator
 
 def create_map(x_min, x_max, y_min, y_max):
     x_padding = (x_max - x_min) * 0.15
@@ -25,7 +27,7 @@ def create_map(x_min, x_max, y_min, y_max):
 
 
 def add_markers(fig, source, view=None):
-    return fig.circle(
+    markers = fig.circle(
         x='x',
         y='y',
         size=10,
@@ -34,6 +36,17 @@ def add_markers(fig, source, view=None):
         line_width=2,
         view=view
     )
+    
+    # Add a hover tool to show the 'id' field
+    hover = HoverTool(
+        tooltips=[
+            ("bank_id", "@bank_id") 
+        ],
+        renderers=[markers]
+    )
+    
+    fig.add_tools(hover)
+    return markers
 
 def add_routes(fig, source):
     return fig.multi_line(
@@ -41,5 +54,44 @@ def add_routes(fig, source):
         ys="y",
         color="color",
         source=source,
-        line_width=2
+        line_width=2,
+        alpha=.25
     )
+
+
+def add_stops(fig, user_location, route, foodbank_loc, source):
+    # Plot user and food bank
+    circle_x, circle_y = lat_lon_to_mercator(user_location[0], user_location[1]) # TODO: remove
+    food_x, food_y = lat_lon_to_mercator(foodbank_loc[0], foodbank_loc[1])
+    fig.circle(circle_x, circle_y, size=20, color='red')
+    fig.circle(food_x, food_y, size=20, color='green')
+    if not route:
+        return fig #TODO: Display error
+
+    highlight_df = source[
+        source['unique_key'].isin(route[1:-1])
+    ]
+
+    grouped = highlight_df.groupby(['route_id'])
+
+    xs = []
+    ys = []
+    colors = []
+
+    for _, group in grouped:
+        start_idx = group.index.min()
+        end_idx = group.index.max()
+        segment = source.loc[start_idx:end_idx].copy()
+
+        xs.append(segment['x'].tolist())
+        ys.append(segment['y'].tolist())
+        colors.append(segment['color'].values[0])
+
+    fig.multi_line(
+        xs=xs,
+        ys=ys,
+        line_color=colors,
+        line_width=5
+    )
+    return fig
+
