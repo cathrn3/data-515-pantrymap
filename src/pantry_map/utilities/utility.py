@@ -3,6 +3,7 @@ import hashlib
 import numpy as np
 from geopy.geocoders import Nominatim
 import pandas as pd
+from geopy.exc import GeocoderTimedOut
 
 def color_from_id(route_id):
     """Generate a color from the route_id"""
@@ -47,20 +48,23 @@ def validate_address(input_text):
 def geocode_address(address):
     """Convert a user-entered address into latitude and longitude using Geopy."""
     geolocator = Nominatim(user_agent="pantrymap_app")
-    try:
-        location = geolocator.geocode(address)
-        if location is not None:
-            lat = location.latitude
-            lon = location.longitude
+    for _ in range(2):
+        try:
+            location = geolocator.geocode(address)
+            if location is not None:
+                lat = location.latitude
+                lon = location.longitude
 
-            # Seattle region bounds
-            if not (47.0 <= lat <= 48.0 and -123.0 <= lon <= -121.5):
-                print("Address is outside the Seattle area.")
-                return None, None
+                # Seattle region bounds
+                if not (47.0 <= lat <= 48.0 and -123.0 <= lon <= -121.5):
+                    print("Address is outside the Seattle area.")
+                    return None, None
 
-            return lat, lon
-    except Exception as e:
-        print(f"Geocoding error: {e}")
+                return lat, lon
+        except GeocoderTimedOut:
+            continue
+        except Exception as e:
+            print(f"Geocoding error: {e}")
     return None, None
 
 def find_nearest_foodbanks(foodbank_df, user_lat, user_lon, k=5):
