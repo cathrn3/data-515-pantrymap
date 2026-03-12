@@ -6,19 +6,19 @@ class TestAddressValidation(unittest.TestCase):
 
     def test_valid_address(self):
         """Test that a non-empty address is considered valid."""
-        valid, msg = validate_address("123 Main St")
+        valid, msg, address = validate_address("123 Main St")
         self.assertTrue(valid)
         self.assertEqual(msg, "")
 
     def test_empty_address(self):
         """Test that an empty string is considered invalid."""
-        valid, msg = validate_address("")
+        valid, msg, address = validate_address("")
         self.assertFalse(valid)
         self.assertEqual(msg, "Address cannot be empty.")
 
     def test_whitespace_address(self):
         """Test that an address with only spaces is considered invalid."""
-        valid, msg = validate_address("   ")
+        valid, msg, address = validate_address("   ")
         self.assertFalse(valid)
 
 class TestGeocode(unittest.TestCase):
@@ -30,8 +30,8 @@ class TestGeocode(unittest.TestCase):
         lat, lon = geocode_address("85 Pike St. Seattle WA")
         self.assertIsNotNone(lat)
         self.assertIsNotNone(lon)
-        self.assertTrue(-180 <= lon <= 180)
-        self.assertTrue(-90 <= lat <= 90)
+        self.assertTrue(47.0 <= lat <= 48.0)
+        self.assertTrue(-123.0 <= lon <= -121.5)
         print(lat, lon)
 
     def test_invalid_location(self):

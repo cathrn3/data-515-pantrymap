@@ -42,7 +42,7 @@ def validate_address(input_text):
     if "seattle" not in address.lower():
         address = f"{address}, Seattle, WA"
 
-    return True, ""
+    return True, "", address
 
 def geocode_address(address):
     """Convert a user-entered address into latitude and longitude using Geopy."""
