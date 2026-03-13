@@ -59,7 +59,7 @@ jobs:
         uses: conda-incubator/setup-miniconda@v2
         with:
           # Use the environment name from your environment.yml file
-          activate-environment: ci_example
+          activate-environment: ci_pantrymap
           # The name of the environment file you want conda to use
           environment-file: environment.yml
           # Whether you want conda to automatically update the conda
@@ -81,6 +81,9 @@ jobs:
       
       # If there are any other steps in order for your tests to
       # run successfully, you can add those steps here!
+      - name: Install package
+        run: |
+          pip install -e .
 
       # Next step: run the unit tests with code coverage.
       - name: Unit tests
