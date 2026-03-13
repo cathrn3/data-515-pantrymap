@@ -1,9 +1,22 @@
+"""
+Data loading utilities for the PantryMap application.
+
+This module provides functions to load and preprocess transit and food bank
+data for the interactive map and dashboard.
+"""
+
 import os
 import pandas as pd
 from pantry_map.utilities.utility import lat_lon_to_mercator, color_from_id
 from pantry_map.config import BASE_DIR
 
 def get_transit_df():
+    """
+    Load and process transit shapes data.
+
+    Returns:
+        pd.DataFrame: A grouped dataframe containing transit routes and their colors.
+    """
     data_path = os.path.join(BASE_DIR, "pantry_map", "data", "raw", "shapes.txt")
     transit_df = pd.read_csv(data_path)
     transit_df["x"], transit_df["y"] = lat_lon_to_mercator(
@@ -15,6 +28,12 @@ def get_transit_df():
     return grouped_df
 
 def get_foodbank_df():
+    """
+    Load and process food bank data (location and contact info).
+
+    Returns:
+        pd.DataFrame: Dataframe containing food bank locations and mapping coordinates.
+    """
     data_path = os.path.join(BASE_DIR, "pantry_map", "data", "raw",
                              "Emergency_Food_and_Meals_Seattle_and_King_County_20260222.csv")
     foodbank_df = pd.read_csv(data_path)

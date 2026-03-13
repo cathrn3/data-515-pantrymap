@@ -1,6 +1,25 @@
+"""
+Map components for the PantryMap Bokeh application.
+
+This module provides functions to create the Bokeh map figure and add
+layers like markers and routes to the map.
+"""
+
 from bokeh.plotting import figure
 
 def create_map(x_min, x_max, y_min, y_max):
+    """
+    Create a Bokeh figure with a Mercator tile background.
+
+    Args:
+        x_min (float): Minimum X coordinate (Mercator).
+        x_max (float): Maximum X coordinate (Mercator).
+        y_min (float): Minimum Y coordinate (Mercator).
+        y_max (float): Maximum Y coordinate (Mercator).
+
+    Returns:
+        figure: A Bokeh figure object.
+    """
     x_padding = (x_max - x_min) * 0.15
     y_padding = (y_max - y_min) * 0.15
 
@@ -23,8 +42,18 @@ def create_map(x_min, x_max, y_min, y_max):
 
     return fig
 
-
 def add_markers(fig, source, view=None):
+    """
+    Add circle markers to the provided Bokeh figure.
+
+    Args:
+        fig (figure): The Bokeh figure to add markers to.
+        source (ColumnDataSource): The data source for the markers.
+        view (CDSView, optional): A view to filter the data source.
+
+    Returns:
+        GlyphRenderer: The resulting Bokeh glyph renderer.
+    """
     return fig.circle(
         x='x',
         y='y',
@@ -36,6 +65,16 @@ def add_markers(fig, source, view=None):
     )
 
 def add_routes(fig, source):
+    """
+    Add multi-line routes to the provided Bokeh figure.
+
+    Args:
+        fig (figure): The Bokeh figure to add routes to.
+        source (ColumnDataSource): The data source for the routes.
+
+    Returns:
+        GlyphRenderer: The resulting Bokeh glyph renderer.
+    """
     return fig.multi_line(
         xs="x",
         ys="y",
