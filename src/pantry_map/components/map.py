@@ -1,6 +1,4 @@
 from bokeh.plotting import figure
-from bokeh.models import HoverTool
-from pantry_map.utilities.utility import lat_lon_to_mercator
 
 def create_map(x_min, x_max, y_min, y_max):
     x_padding = (x_max - x_min) * 0.15
@@ -13,7 +11,7 @@ def create_map(x_min, x_max, y_min, y_max):
         y_axis_type="mercator",
         width=1000,
         height=550,
-        tools="pan,wheel_zoom,box_zoom,reset,save",
+        tools="pan,wheel_zoom,box_zoom,reset,save,tap",
         active_scroll='wheel_zoom',
         toolbar_location="above",
         background_fill_color='#fafbfc',
@@ -26,53 +24,67 @@ def create_map(x_min, x_max, y_min, y_max):
     return fig
 
 
-def add_markers(fig, source, view=None):
-    markers = fig.circle(
-        x='x',
-        y='y',
+def add_markers(fig, user_source, foodbank_highlight_source, foodbank_source, foodbank_view=None):    
+    _ = fig.circle(
+        x="x",
+        y="y",
+        size=15,
+        color="blue",
+        fill_color="white",
+        source=foodbank_highlight_source,
+        # view=foodbank_view
+    )
+
+    foodbank_markers = fig.circle(
+        x="x",
+        y="y",
         size=10,
         alpha=0.85,
-        source=source,
+        source=foodbank_source,
         line_width=2,
-        view=view
+        view=foodbank_view
     )
-    
-    # Add a hover tool to show the 'id' field
-    hover = HoverTool(
-        tooltips=[
-            ("bank_id", "@bank_id") 
-        ],
-        renderers=[markers]
-    )
-    
-    fig.add_tools(hover)
-    return markers
 
-def add_routes(fig, source):
-    return fig.multi_line(
+    _ = fig.circle(
+        x="x",
+        y="y",
+        size=15,
+        color="red",
+        source=user_source
+    )
+    
+    return foodbank_markers
+
+def add_routes(fig, grouped_shapes_source, route_source):
+    fig.multi_line(
         xs="x",
         ys="y",
         color="color",
-        source=source,
+        source=grouped_shapes_source,
         line_width=2,
         alpha=.25
     )
 
+    fig.multi_line(
+        xs="xs",
+        ys="ys",
+        line_color="color",
+        line_width=5,
+        source=route_source
+    )
 
-def add_stops(fig, user_location, route, foodbank_loc, source):
-    # Plot user and food bank
-    circle_x, circle_y = lat_lon_to_mercator(user_location[0], user_location[1]) # TODO: remove
-    food_x, food_y = lat_lon_to_mercator(foodbank_loc[0], foodbank_loc[1])
-    fig.circle(circle_x, circle_y, size=20, color='red')
-    fig.circle(food_x, food_y, size=20, color='green')
+def update_route(route, foodbank_loc, source, foodbank_highlight_source, route_source):
+    foodbank_highlight_source.data = {
+        "x": [foodbank_loc[0]],
+        "y": [foodbank_loc[1]]
+    }
+
     if not route:
-        return fig #TODO: Display error
+        route_source.data = {"xs": [], "ys": [], "color": []} # TODO: render error
+        return
 
-    highlight_df = source[
-        source['unique_key'].isin(route[1:-1])
-    ]
-
-    grouped = highlight_df.groupby(['route_id'])
+    highlight_df = source[source["unique_key"].isin(route[1:-1])]
+    grouped = highlight_df.groupby("route_id")
 
     xs = []
     ys = []
@@ -81,17 +93,23 @@ def add_stops(fig, user_location, route, foodbank_loc, source):
     for _, group in grouped:
         start_idx = group.index.min()
         end_idx = group.index.max()
-        segment = source.loc[start_idx:end_idx].copy()
+        segment = source.loc[start_idx:end_idx]
 
-        xs.append(segment['x'].tolist())
-        ys.append(segment['y'].tolist())
-        colors.append(segment['color'].values[0])
+        xs.append(segment["x"].tolist())
+        ys.append(segment["y"].tolist())
+        colors.append(segment["color"].iloc[0])
 
-    fig.multi_line(
-        xs=xs,
-        ys=ys,
-        line_color=colors,
-        line_width=5
-    )
-    return fig
+    route_source.data = {
+        "xs": xs,
+        "ys": ys,
+        "color": colors
+    }
 
+def clear_routes(foodbank_highlight_source, foodbank_source, route_source):
+    foodbank_highlight_source.data = {"x": [], "y": []}
+    foodbank_source.selected.indices = []
+    route_source.data = {
+        "xs": [],
+        "ys": [],
+        "color": []
+    }

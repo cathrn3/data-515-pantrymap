@@ -16,6 +16,7 @@ class calculateRoute:
     WALKING_SPEED = 2 # Assumed walking speed at 2 MPH
 
     def __init__(self, food_bank_df, transit_df, transfers_df):
+        self.user_location = None
         self.food_bank_df = food_bank_df
         self.transit_df = transit_df
         self.transfers_df = transfers_df
@@ -41,7 +42,11 @@ class calculateRoute:
 
     def set_user_location(self, user_location: tuple):
         self.user_location = user_location # lat, lon coordinates. Assumed to be valid and in Seattle
-        self._add_user_location_to_graph()
+        if user_location != None:
+            self._add_user_location_to_graph()
+    
+    def get_user_location(self):
+        return self.user_location
 
     def _get_nearby_nodes(self, tree, source_coords, radius):
         lat, lon = source_coords
@@ -90,6 +95,8 @@ class calculateRoute:
 
     def get_route_to_destination(self, food_bank_id):
         try:
+            if self.user_location == None:
+                return None, None
             new_graph = self._get_nearby_nodes_to_food_bank(food_bank_id)
             time, route = nx.single_source_dijkstra(new_graph, 'USER', food_bank_id, weight='weight')
             return time, route # Return shortest path
