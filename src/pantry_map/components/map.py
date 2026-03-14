@@ -31,8 +31,7 @@ def add_markers(fig, user_source, foodbank_highlight_source, foodbank_source, fo
         size=15,
         color="blue",
         fill_color="white",
-        source=foodbank_highlight_source,
-        # view=foodbank_view
+        source=foodbank_highlight_source
     )
 
     foodbank_markers = fig.circle(
