@@ -89,6 +89,7 @@ def update_route(route, foodbank_loc, source, foodbank_highlight_source, route_s
     ys = []
     colors = []
 
+    # Render each route along the found path
     for _, group in grouped:
         start_idx = group.index.min()
         end_idx = group.index.max()

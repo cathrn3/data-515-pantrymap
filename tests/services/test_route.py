@@ -110,18 +110,21 @@ class TestCalculateRoute(unittest.TestCase):
         self.assertIsNone(route)
 
     def test_direct_walking(self):
+        """Should find route which can be reached via walking"""
         self.routeCalculater.set_user_location((47.59, -122.33))
         est_time, route = self.routeCalculater.get_route_to_destination("foodbank1")
         self.assertAlmostEqual(est_time, 20, delta=1)
         self.assertEqual(route, ["USER", "foodbank1"])
 
     def test_transit_route(self):
+        """Should find a route which requires public transit"""
         self.routeCalculater.set_user_location((47.59, -122.33))
         est_time, route = self.routeCalculater.get_route_to_destination("foodbank2")
         self.assertAlmostEqual(est_time, 42, delta=1)
         self.assertEqual(route, ["USER", "route1stop1", "route1stop2", "foodbank2"])
 
     def test_transit_route_with_transfer(self):
+        """Should find a route which requires a transfer between buses"""
         self.routeCalculater.set_user_location((47.59, -122.33))
         est_time, route = self.routeCalculater.get_route_to_destination("foodbank3")
         self.assertAlmostEqual(est_time, 73, delta=1)
@@ -138,13 +141,14 @@ class TestCalculateRoute(unittest.TestCase):
         self.assertEqual(route, ["USER", "route3stop1", "route3stop2", "foodbank2"])
 
     def test_no_route_user_too_far(self):
-        """Returns None if no route is found"""
+        """Should return None if no route is found"""
         self.routeCalculater.set_user_location((40.00, -122.33))
         est_time, route = self.routeCalculater.get_route_to_destination("foodbank1")
         self.assertIsNone(est_time)
         self.assertIsNone(route)
 
     def test_no_transit_route(self):
+        """Should return None if route is found"""
         self.routeCalculater.set_user_location((47.59, -122.33))
         est_time, route = self.routeCalculater.get_route_to_destination("foodbank4")
         self.assertIsNone(est_time)
