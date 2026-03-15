@@ -1,13 +1,5 @@
-feature/filter-functionality
+
 from datetime import datetime
-"""
-Filtering logic for PantryMap data.
-
-This module provides functions to create masks for filtering food bank data
-based on user selections.
-"""
-main
-
 import numpy as np
 from pantry_map.utilities.utility import calculate_distance
 
