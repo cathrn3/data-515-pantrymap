@@ -1,38 +1,17 @@
-"""
-Map components for the PantryMap Bokeh application.
-
-This module provides functions to create the Bokeh map figure and add
-layers like markers and routes to the map.
-"""
+"""Map components for the PantryMap Bokeh application."""
 
 from bokeh.plotting import figure
 
 
 def create_map(foodbank_df):
-    x_q_low = foodbank_df['x'].quantile(0.02)
-    x_q_high = foodbank_df['x'].quantile(0.98)
-    y_q_low = foodbank_df['y'].quantile(0.02)
-    y_q_high = foodbank_df['y'].quantile(0.98)
+    """Create a Bokeh figure centered on Seattle-area points with robust bounds."""
+    x_q_low = foodbank_df["x"].quantile(0.02)
+    x_q_high = foodbank_df["x"].quantile(0.98)
+    y_q_low = foodbank_df["y"].quantile(0.02)
+    y_q_high = foodbank_df["y"].quantile(0.98)
 
     x_padding = (x_q_high - x_q_low) * 0.10
     y_padding = (y_q_high - y_q_low) * 0.10
-
-def create_map(x_min, x_max, y_min, y_max):
-    """
-    Create a Bokeh figure with a Mercator tile background.
-
-    Args:
-        x_min (float): Minimum X coordinate (Mercator).
-        x_max (float): Maximum X coordinate (Mercator).
-        y_min (float): Minimum Y coordinate (Mercator).
-        y_max (float): Maximum Y coordinate (Mercator).
-
-    Returns:
-        figure: A Bokeh figure object.
-    """
-    x_padding = (x_max - x_min) * 0.15
-    y_padding = (y_max - y_min) * 0.15
-main
 
     fig = figure(
         x_range=(x_q_low - x_padding, x_q_high + x_padding),
@@ -41,129 +20,37 @@ main
         y_axis_type="mercator",
         width=1000,
         height=550,
-        tools="pan,wheel_zoom,box_zoom,reset,save,tap",
-        active_scroll='wheel_zoom',
+        tools="pan,wheel_zoom,box_zoom,reset,save",
+        active_scroll="wheel_zoom",
         toolbar_location="above",
-        background_fill_color='#fafbfc',
-        border_fill_color='#fafbfc',
-        outline_line_color='#e5e7eb',
-        sizing_mode="scale_width"
+        background_fill_color="#fafbfc",
+        border_fill_color="#fafbfc",
+        outline_line_color="#e5e7eb",
+        sizing_mode="scale_width",
     )
     fig.add_tile("CartoDB Positron")
-
     return fig
 
 
-def add_markers(fig, user_source, foodbank_highlight_source, foodbank_source, foodbank_view=None):
-    """
-    Add circle markers to the provided Bokeh figure.
-
-    Args:
-        fig (figure): The Bokeh figure to add markers to.
-        user_source (ColumnDataSource): Data source for the user location marker.
-        foodbank_highlight_source (ColumnDataSource): Data source for highlighted foodbank markers.
-        foodbank_source (ColumnDataSource): Data source for all foodbank markers.
-        foodbank_view (CDSView, optional): A view to filter the foodbank data source.
-
-    Returns:
-        GlyphRenderer: The foodbank marker glyph renderer.
-    """
-    _ = fig.circle(
-        x="x",
-        y="y",
-        size=15,
-        color="blue",
-        fill_color="white",
-        source=foodbank_highlight_source
-    )
-
-    foodbank_markers = fig.circle(
+def add_markers(fig, source, view=None):
+    """Add food bank markers."""
+    return fig.circle(
         x="x",
         y="y",
         size=10,
         alpha=0.85,
-        source=foodbank_source,
+        source=source,
         line_width=2,
-        view=foodbank_view
+        view=view,
     )
 
-    _ = fig.circle(
-        x="x",
-        y="y",
-        size=15,
-        color="red",
-        source=user_source
-    )
 
-    return foodbank_markers
-
-def add_routes(fig, grouped_shapes_source, route_source):
-    """
-    Add multi-line routes to the provided Bokeh figure.
-
-    Args:
-        fig (figure): The Bokeh figure to add routes to.
-        grouped_shapes_source (ColumnDataSource): Data source for transit shape routes.
-        route_source (ColumnDataSource): Data source for the active calculated route.
-    """
-    fig.multi_line(
+def add_routes(fig, source):
+    """Add transit route polylines."""
+    return fig.multi_line(
         xs="x",
         ys="y",
         color="color",
-        source=grouped_shapes_source,
+        source=source,
         line_width=2,
-        alpha=.25
     )
-
-    fig.multi_line(
-        xs="xs",
-        ys="ys",
-        line_color="color",
-        line_width=5,
-        source=route_source
-    )
-
-def update_route(route, foodbank_loc, source, foodbank_highlight_source, route_source):
-    """Update the highlighted food bank marker and draw the transit route."""
-    foodbank_highlight_source.data = {
-        "x": [foodbank_loc[0]],
-        "y": [foodbank_loc[1]]
-    }
-
-    if not route:
-        route_source.data = {"xs": [], "ys": [], "color": []}
-        return
-
-    highlight_df = source[source["unique_key"].isin(route[1:-1])]
-    grouped = highlight_df.groupby("route_id")
-
-    xs = []
-    ys = []
-    colors = []
-
-    # Render each route along the found path
-    for _, group in grouped:
-        # Shapes dataframe is ordered correctly
-        start_idx = group.index.min()
-        end_idx = group.index.max()
-        segment = source.loc[start_idx:end_idx]
-
-        xs.append(segment["x"].tolist())
-        ys.append(segment["y"].tolist())
-        colors.append(segment["color"].iloc[0])
-
-    route_source.data = {
-        "xs": xs,
-        "ys": ys,
-        "color": colors
-    }
-
-def clear_routes(foodbank_highlight_source, foodbank_source, route_source):
-    """Clear the highlighted food bank marker and any drawn route."""
-    foodbank_highlight_source.data = {"x": [], "y": []}
-    foodbank_source.selected.indices = []
-    route_source.data = {
-        "xs": [],
-        "ys": [],
-        "color": []
-    }
