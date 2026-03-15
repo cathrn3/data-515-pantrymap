@@ -12,4 +12,4 @@ dependencies:
   - geopy
   - bokeh
   - networkx
-  - sklearn
+  - scikit-learn
