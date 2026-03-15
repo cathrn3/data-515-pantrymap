@@ -39,9 +39,29 @@ class TestFoodbankFilters(unittest.TestCase):
         mask = get_foodbank_mask(self.df, selected_eligibility=["Seniors"])
         self.assertEqual(mask.tolist(), [False, True, False, False])
 
+    def test_empty_eligibility_means_no_filtering(self):
+        # Empty eligibility selection should not filter out any rows
+        mask = get_foodbank_mask(self.df, selected_eligibility=[])
+        self.assertEqual(mask.tolist(), [True, True, True, True])
+
     def test_day_of_week_filter(self):
         mask = get_foodbank_mask(self.df, selected_days=["Sunday"])
         self.assertEqual(mask.tolist(), [False, False, True, False])
+
+    def test_empty_days_means_no_filtering(self):
+        # Empty day selection should not filter out any rows
+        mask = get_foodbank_mask(self.df, selected_days=[])
+        self.assertEqual(mask.tolist(), [True, True, True, True])
+
+    def test_empty_eligibility_and_days_with_open_only(self):
+        # When both eligibility and days are empty, only open_only should apply
+        mask = get_foodbank_mask(
+            self.df,
+            open_only=True,
+            selected_eligibility=[],
+            selected_days=[],
+        )
+        self.assertEqual(mask.tolist(), [True, False, True, True])
 
     def test_distance_filter_with_user_location(self):
         # Roughly near row 0/1/2, far from row 3
