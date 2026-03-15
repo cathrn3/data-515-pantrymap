@@ -18,7 +18,9 @@ def _operational_status_mask(foodbank_df, open_only, current_day=None):
         return np.ones(len(foodbank_df), dtype=bool)
 
     if current_day is None:
-        current_day = datetime.now().strftime("%A")
+        weekday_index = datetime.now().weekday()  # 0 = Monday, 6 = Sunday
+        english_weekdays = ["Monday", "Tuesday", "Wednesday", "Thursday", "Friday", "Saturday", "Sunday"]
+        current_day = english_weekdays[weekday_index]
 
     status_mask = (
         foodbank_df["Operational Status"]
