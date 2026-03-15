@@ -4,7 +4,7 @@ from pantry_map.data.loader import get_foodbank_df, get_shapes_df, get_transit_d
 from pantry_map.components.map import add_markers, add_routes, create_map, update_route, clear_routes
 from pantry_map.components.layout import create_sidebar, create_layout
 from pantry_map.filters.mask import get_foodbank_mask
-from pantry_map.services.route import calculateRoute
+from pantry_map.services.route import CalculateRoute
 from pantry_map.utilities.utility import validate_address, geocode_address, find_nearest_foodbanks, lat_lon_to_mercator
 
 shapes_df, grouped_shapes_df = get_shapes_df()
@@ -27,7 +27,7 @@ route_source = ColumnDataSource({
     "color": []
 })
 
-route_planner = calculateRoute(foodbank_df, transit_df, transfers_df)
+route_planner = CalculateRoute(foodbank_df, transit_df, transfers_df)
 
 x_min, x_max = foodbank_df['x'].min(), foodbank_df['x'].max()
 y_min, y_max = foodbank_df['y'].min(), foodbank_df['y'].max()

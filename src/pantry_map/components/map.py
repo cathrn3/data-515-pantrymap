@@ -11,7 +11,7 @@ def create_map(x_min, x_max, y_min, y_max):
         y_axis_type="mercator",
         width=1000,
         height=550,
-        tools="pan,wheel_zoom,box_zoom,reset,save",
+        tools="pan,wheel_zoom,box_zoom,reset,save,tap",
         active_scroll='wheel_zoom',
         toolbar_location="above",
         background_fill_color='#fafbfc',
