@@ -97,7 +97,7 @@ jobs:
       #            the following lines.
       - name: Lint with pylint
         run: |
-          pylint src/pantry_map/**/*.py
+          pylint src/pantry_map
 
 
       # Lastly: report code coverage to Coveralls.
