@@ -1,4 +1,6 @@
 import unittest
+from unittest.mock import patch
+from geopy.exc import GeocoderTimedOut, GeocoderServiceError
 from pantry_map.utilities.utility import validate_address, geocode_address
 
 class TestAddressValidation(unittest.TestCase):
@@ -37,6 +39,24 @@ class TestGeocode(unittest.TestCase):
     def test_invalid_location(self):
         """Test that an invalid address returns None."""
         lat, lon = geocode_address("ThisAddressDoesNotExistXYZ")
+        self.assertIsNone(lat)
+        self.assertIsNone(lon)
+
+    @patch("pantry_map.utilities.utility.Nominatim.geocode")
+    def test_geocoder_timeout(self, mock_geocode):
+        """Test that GeocoderTimedOut is handled and returns None after retries."""
+        mock_geocode.side_effect = GeocoderTimedOut("Service timed out")
+        lat, lon = geocode_address("Some Address")
+        self.assertIsNone(lat)
+        self.assertIsNone(lon)
+        # Should have tried twice due to the loop in utility.py
+        self.assertEqual(mock_geocode.call_count, 2)
+
+    @patch("pantry_map.utilities.utility.Nominatim.geocode")
+    def test_geocoder_service_error(self, mock_geocode):
+        """Test that GeocoderServiceError is handled and returns None."""
+        mock_geocode.side_effect = GeocoderServiceError("Service unavailable")
+        lat, lon = geocode_address("Some Address")
         self.assertIsNone(lat)
         self.assertIsNone(lon)
 

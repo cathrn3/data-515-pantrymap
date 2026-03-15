@@ -10,4 +10,6 @@ dependencies:
   - pandas
   - pip
   - geopy
-
+  - bokeh
+  - networkx
+  - scikit-learn
