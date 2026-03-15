@@ -127,7 +127,7 @@ def marker_callback(attr, old, new):
     )
     foodbank_id = foodbank_source.data["bank_id"][idx]
     est_time, route = route_planner.get_route_to_destination(foodbank_id)
-    print(est_time) # TODO: render this
+    sidebar_widgets["results_div"].text = f"Estimated travel time: {est_time}"
     update_route(route, foodbank_loc, shapes_df, foodbank_highlight_source, route_source)
 
 
