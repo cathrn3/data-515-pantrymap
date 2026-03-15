@@ -71,8 +71,17 @@ def _distance_mask(foodbank_df, user_lat, user_lon, max_distance_miles):
     def _within_distance(row):
         lat = row["Latitude"]
         lon = row["Longitude"]
-        if np.isnan(lat) or np.isnan(lon):
+
+        # Safely handle missing or non-numeric coordinates
+        try:
+            lat = float(lat)
+            lon = float(lon)
+        except (TypeError, ValueError):
             return False
+
+        if not np.isfinite(lat) or not np.isfinite(lon):
+            return False
+
         return calculate_distance(user_lat, user_lon, lat, lon) <= max_distance_miles
 
     return foodbank_df.apply(_within_distance, axis=1)
