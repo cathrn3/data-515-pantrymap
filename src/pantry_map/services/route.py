@@ -26,7 +26,9 @@ class CalculateRoute:
 
     def __init__(self, food_bank_df, transit_df, transfers_df):
         self.user_location = None
-        self.food_bank_df = food_bank_df
+        # Filter out food banks without valid coordinates so that indices from the
+        # BallTree correspond directly to rows in self.food_bank_df.
+        self.food_bank_df = food_bank_df.dropna(subset=["Latitude", "Longitude"]).reset_index(drop=True)
         self.transit_df = transit_df
         self.transfers_df = transfers_df
         self.graph = self._initialize_graph()
@@ -36,7 +38,9 @@ class CalculateRoute:
         self.transit_coords = np.radians(self.transit_df_nonnull[['stop_lat', 'stop_lon']])
         self.transit_tree = BallTree(self.transit_coords, metric='haversine')
 
-        self.food_bank_coords = np.radians(self.food_bank_df[['Latitude','Longitude']].dropna())
+        # Build the BallTree from the same filtered DataFrame used throughout the class,
+        # ensuring that returned indices can be safely applied with .iloc on self.food_bank_df.
+        self.food_bank_coords = np.radians(self.food_bank_df[['Latitude','Longitude']])
         self.food_bank_tree = BallTree(self.food_bank_coords, metric='haversine')
 
     def _initialize_graph(self):
