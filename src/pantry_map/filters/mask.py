@@ -1,3 +1,10 @@
+"""
+Filtering logic for PantryMap data.
+
+This module provides functions to create masks for filtering food bank data
+based on user selections.
+"""
+
 import numpy as np
 from pantry_map.utilities.utility import calculate_distance
 
@@ -77,7 +84,7 @@ def _distance_mask(foodbank_df, user_lat, user_lon, max_distance_miles):
     return foodbank_df.apply(_within_distance, axis=1)
 
 
-def get_foodbank_mask(
+def get_foodbank_mask(  # pylint: disable=too-many-arguments
     foodbank_df,
     resource_type="Both",
     open_only=False,
@@ -87,9 +94,18 @@ def get_foodbank_mask(
     user_lon=None,
     max_distance_miles=25,
 ):
+    """
+    Create a boolean mask for filtering the food bank dataframe.
+
+    Args:
+        foodbank_df (pd.DataFrame): The dataframe to filter.
+        resource_types (MultiSelect): The Bokeh MultiSelect widget containing selected types.
+
+    Returns:
+        np.array: A boolean array mask.
+    """
     selected_eligibility = selected_eligibility or []
     selected_days = selected_days or []
-
     foodbank_mask = np.ones(len(foodbank_df), dtype=bool)
     foodbank_mask &= _resource_type_mask(foodbank_df, resource_type)
     foodbank_mask &= _operational_status_mask(foodbank_df, open_only)
