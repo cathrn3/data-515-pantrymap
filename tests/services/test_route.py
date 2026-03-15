@@ -4,7 +4,7 @@ import numpy as np
 from unittest.mock import patch
 import networkx as nx
 
-from src.pantry_map.services.route import calculateRoute
+from pantry_map.services.route import calculateRoute
 
 
 class TestCalculateRoute(unittest.TestCase):
