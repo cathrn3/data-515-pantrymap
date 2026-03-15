@@ -57,11 +57,11 @@ class TestCalculateRoute(unittest.TestCase):
         })
 
     def setUp(self):
-        self.routeCalculater = calculateRoute(self.food_bank_df, self.transit_df, self.transfers_df)
+        self.routeCalculator = calculateRoute(self.food_bank_df, self.transit_df, self.transfers_df)
 
     def test_graph(self):
         """Ensure graph is correctly initialized"""
-        graph = self.routeCalculater.graph
+        graph = self.routeCalculator.graph
 
         expected_edges = {
             ("route1stop1", "route1stop2"),
@@ -79,19 +79,19 @@ class TestCalculateRoute(unittest.TestCase):
 
     def test_set_user_location(self):
         """Test user location gets connected to the graph"""
-        self.routeCalculater.set_user_location((47.59, -122.33))
+        self.routeCalculator.set_user_location((47.59, -122.33))
 
-        graph = self.routeCalculater.graph
+        graph = self.routeCalculator.graph
         self.assertTrue(graph.has_edge("USER", "route1stop1"))
         self.assertTrue(graph.has_edge("USER", "foodbank1"))
-        self.assertEqual(self.routeCalculater.get_user_location(), (47.59, -122.33))
+        self.assertEqual(self.routeCalculator.get_user_location(), (47.59, -122.33))
 
     def test_reset_user_location(self):
         """Test previous user location gets reset upon new location"""
-        self.routeCalculater.set_user_location((47.59, -122.33))
-        self.routeCalculater.set_user_location((47.81, -122.33))
+        self.routeCalculator.set_user_location((47.59, -122.33))
+        self.routeCalculator.set_user_location((47.81, -122.33))
 
-        graph = self.routeCalculater.graph
+        graph = self.routeCalculator.graph
         self.assertFalse(graph.has_edge("USER", "route1stop1"))
 
         expected_user_edges = {
@@ -104,8 +104,8 @@ class TestCalculateRoute(unittest.TestCase):
 
     def test_empty_user_location(self):
         """Should return no route if user location is not set"""
-        self.routeCalculater.set_user_location(None)
-        est_time, route = self.routeCalculater.get_route_to_destination("foodbank1")
+        self.routeCalculator.set_user_location(None)
+        est_time, route = self.routeCalculator.get_route_to_destination("foodbank1")
         self.assertIsNone(est_time)
         self.assertIsNone(route)
 
