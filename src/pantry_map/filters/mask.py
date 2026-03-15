@@ -1,4 +1,3 @@
-
 from datetime import datetime
 import numpy as np
 from pantry_map.utilities.utility import calculate_distance
