@@ -1,3 +1,5 @@
+from datetime import datetime
+
 import numpy as np
 from pantry_map.utilities.utility import calculate_distance
 
@@ -12,10 +14,14 @@ def _resource_type_mask(foodbank_df, resource_type):
     return np.ones(len(foodbank_df), dtype=bool)
 
 
-def _operational_status_mask(foodbank_df, open_only):
+def _operational_status_mask(foodbank_df, open_only, current_day=None):
     if not open_only:
         return np.ones(len(foodbank_df), dtype=bool)
-    return (
+
+    if current_day is None:
+        current_day = datetime.now().strftime("%A")
+
+    status_mask = (
         foodbank_df["Operational Status"]
         .fillna("")
         .astype(str)
@@ -23,6 +29,15 @@ def _operational_status_mask(foodbank_df, open_only):
         .str.lower()
         .eq("open")
     )
+
+    available_today_mask = (
+        foodbank_df["Days/Hours"]
+        .fillna("")
+        .astype(str)
+        .str.contains(current_day, case=False, regex=False)
+    )
+
+    return status_mask & available_today_mask
 
 
 def _eligibility_mask(foodbank_df, selected_eligibility):
@@ -86,13 +101,14 @@ def get_foodbank_mask(
     user_lat=None,
     user_lon=None,
     max_distance_miles=25,
+    current_day=None,
 ):
     selected_eligibility = selected_eligibility or []
     selected_days = selected_days or []
 
     foodbank_mask = np.ones(len(foodbank_df), dtype=bool)
     foodbank_mask &= _resource_type_mask(foodbank_df, resource_type)
-    foodbank_mask &= _operational_status_mask(foodbank_df, open_only)
+    foodbank_mask &= _operational_status_mask(foodbank_df, open_only, current_day)
     foodbank_mask &= _eligibility_mask(foodbank_df, selected_eligibility)
     foodbank_mask &= _day_mask(foodbank_df, selected_days)
     foodbank_mask &= _distance_mask(foodbank_df, user_lat, user_lon, max_distance_miles)
