@@ -58,15 +58,20 @@ class TestFoodbankFilters(unittest.TestCase):
         self.assertEqual(mask.tolist(), [True, True, True, True])
 
     def test_empty_eligibility_and_days_with_open_only(self):
-        # When both eligibility and days are empty, only open_only should apply
+        # When both eligibility and days are empty, only open_only (including current_day) should apply
         mask = get_foodbank_mask(
             self.df,
             open_only=True,
             selected_eligibility=[],
             selected_days=[],
+
             current_day="Sunday",
         )
         self.assertEqual(mask.tolist(), [False, False, True, False])
+
+            current_day="Monday",
+        )
+ main
 
     def test_distance_filter_with_user_location(self):
         # Roughly near row 0/1/2, far from row 3

@@ -1,5 +1,4 @@
 from datetime import datetime
-
 import numpy as np
 from pantry_map.utilities.utility import calculate_distance
 
@@ -19,7 +18,9 @@ def _operational_status_mask(foodbank_df, open_only, current_day=None):
         return np.ones(len(foodbank_df), dtype=bool)
 
     if current_day is None:
-        current_day = datetime.now().strftime("%A")
+        weekday_index = datetime.now().weekday()  # 0 = Monday, 6 = Sunday
+        english_weekdays = ["Monday", "Tuesday", "Wednesday", "Thursday", "Friday", "Saturday", "Sunday"]
+        current_day = english_weekdays[weekday_index]
 
     status_mask = (
         foodbank_df["Operational Status"]
@@ -30,12 +31,22 @@ def _operational_status_mask(foodbank_df, open_only, current_day=None):
         .eq("open")
     )
 
-    available_today_mask = (
-        foodbank_df["Days/Hours"]
-        .fillna("")
+    # Treat missing/blank Days/Hours as "unknown" schedule:
+    # - Only enforce the day-of-week check when Days/Hours is non-empty
+    # - Include rows with empty/missing Days/Hours as long as status is open
+    days_hours = foodbank_df["Days/Hours"]
+    days_hours_nonempty = (
+        days_hours.notna()
+        & days_hours.astype(str).str.strip().ne("")
+    )
+
+    available_today_known = (
+        days_hours.fillna("")
         .astype(str)
         .str.contains(current_day, case=False, regex=False)
     )
+
+    available_today_mask = (~days_hours_nonempty) | (days_hours_nonempty & available_today_known)
 
     return status_mask & available_today_mask
 
@@ -92,7 +103,7 @@ def _distance_mask(foodbank_df, user_lat, user_lon, max_distance_miles):
     return foodbank_df.apply(_within_distance, axis=1)
 
 
-def get_foodbank_mask(
+def get_foodbank_mask(  # pylint: disable=too-many-arguments,too-many-positional-arguments
     foodbank_df,
     resource_type="Both",
     open_only=False,
@@ -103,9 +114,18 @@ def get_foodbank_mask(
     max_distance_miles=25,
     current_day=None,
 ):
+    """
+    Create a boolean mask for filtering the food bank dataframe.
+
+    Args:
+        foodbank_df (pd.DataFrame): The dataframe to filter.
+        resource_types (MultiSelect): The Bokeh MultiSelect widget containing selected types.
+
+    Returns:
+        np.array: A boolean array mask.
+    """
     selected_eligibility = selected_eligibility or []
     selected_days = selected_days or []
-
     foodbank_mask = np.ones(len(foodbank_df), dtype=bool)
     foodbank_mask &= _resource_type_mask(foodbank_df, resource_type)
     foodbank_mask &= _operational_status_mask(foodbank_df, open_only, current_day)

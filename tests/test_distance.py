@@ -28,3 +28,14 @@ class TestNearestFoodbanks(unittest.TestCase):
         """If k > number of food banks, return all food banks."""
         nearest = find_nearest_foodbanks(self.foodbanks, 0, 0, k=10)
         self.assertEqual(len(nearest), len(self.foodbanks))
+
+    def test_missing_coordinates(self):
+        """Should skip food banks with missing latitude or longitude."""
+        df_with_nans = pd.DataFrame({
+            'Name': ['Valid', 'NoLat', 'NoLon', 'NoBoth'],
+            'Latitude': [0, None, 0, None],
+            'Longitude': [0, 0, None, None]
+        })
+        nearest = find_nearest_foodbanks(df_with_nans, 0, 0, k=5)
+        self.assertEqual(len(nearest), 1)
+        self.assertEqual(nearest.iloc[0]['Name'], 'Valid')
