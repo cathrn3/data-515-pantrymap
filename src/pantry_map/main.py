@@ -106,6 +106,10 @@ def on_search_click():
 
 def on_address_change(attr, old, new):
     del attr, old, new
+    # Clear stored user location when the address text changes so that
+    # subsequent filter updates do not use a stale location.
+    user_location["lat"] = None
+    user_location["lon"] = None
     sidebar_widgets["results_div"].text = ""
 
 def on_clear_click():
