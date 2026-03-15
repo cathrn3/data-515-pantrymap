@@ -1,0 +1,68 @@
+import unittest
+import pandas as pd
+
+from pantry_map.filters.mask import get_foodbank_mask
+
+
+class TestFoodbankFilters(unittest.TestCase):
+    def setUp(self):
+        self.df = pd.DataFrame(
+            {
+                "Food Resource Type": ["Food Bank", "Meal", "Food Bank & Meal", "Meal"],
+                "Operational Status": ["Open", "Closed", "Open", "Open"],
+                "Who They Serve": [
+                    "General Public",
+                    "Older Adults 60+ and Eligible Participants",
+                    "Youth and General Public",
+                    "General Public",
+                ],
+                "Days/Hours": [
+                    "Monday, Wednesday",
+                    "Tuesday",
+                    "Sunday",
+                    "Friday, Saturday",
+                ],
+                "Latitude": [47.60, 47.61, 47.65, 47.90],
+                "Longitude": [-122.33, -122.34, -122.30, -122.20],
+            }
+        )
+
+    def test_resource_type_food_bank_includes_combo(self):
+        mask = get_foodbank_mask(self.df, resource_type="Food Bank")
+        self.assertEqual(mask.tolist(), [True, False, True, False])
+
+    def test_open_only_filter(self):
+        mask = get_foodbank_mask(self.df, open_only=True)
+        self.assertEqual(mask.tolist(), [True, False, True, True])
+
+    def test_eligibility_filter_seniors(self):
+        mask = get_foodbank_mask(self.df, selected_eligibility=["Seniors"])
+        self.assertEqual(mask.tolist(), [False, True, False, False])
+
+    def test_day_of_week_filter(self):
+        mask = get_foodbank_mask(self.df, selected_days=["Sunday"])
+        self.assertEqual(mask.tolist(), [False, False, True, False])
+
+    def test_distance_filter_with_user_location(self):
+        # Roughly near row 0/1/2, far from row 3
+        mask = get_foodbank_mask(
+            self.df,
+            user_lat=47.60,
+            user_lon=-122.33,
+            max_distance_miles=10,
+        )
+        self.assertEqual(mask.tolist(), [True, True, True, False])
+
+    def test_combined_filters(self):
+        mask = get_foodbank_mask(
+            self.df,
+            resource_type="Meal",
+            open_only=True,
+            selected_eligibility=["General Public"],
+            selected_days=["Friday"],
+        )
+        self.assertEqual(mask.tolist(), [False, False, False, True])
+
+
+if __name__ == "__main__":
+    unittest.main()
