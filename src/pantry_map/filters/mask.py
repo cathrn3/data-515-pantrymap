@@ -1,10 +1,4 @@
-"""
-Filtering logic for PantryMap data.
-
-This module provides functions to create masks for filtering food bank data
-based on user selections.
-"""
-
+from datetime import datetime
 import numpy as np
 from pantry_map.utilities.utility import calculate_distance
 
@@ -19,10 +13,16 @@ def _resource_type_mask(foodbank_df, resource_type):
     return np.ones(len(foodbank_df), dtype=bool)
 
 
-def _operational_status_mask(foodbank_df, open_only):
+def _operational_status_mask(foodbank_df, open_only, current_day=None):
     if not open_only:
         return np.ones(len(foodbank_df), dtype=bool)
-    return (
+
+    if current_day is None:
+        weekday_index = datetime.now().weekday()  # 0 = Monday, 6 = Sunday
+        english_weekdays = ["Monday", "Tuesday", "Wednesday", "Thursday", "Friday", "Saturday", "Sunday"]
+        current_day = english_weekdays[weekday_index]
+
+    status_mask = (
         foodbank_df["Operational Status"]
         .fillna("")
         .astype(str)
@@ -30,6 +30,25 @@ def _operational_status_mask(foodbank_df, open_only):
         .str.lower()
         .eq("open")
     )
+
+    # Treat missing/blank Days/Hours as "unknown" schedule:
+    # - Only enforce the day-of-week check when Days/Hours is non-empty
+    # - Include rows with empty/missing Days/Hours as long as status is open
+    days_hours = foodbank_df["Days/Hours"]
+    days_hours_nonempty = (
+        days_hours.notna()
+        & days_hours.astype(str).str.strip().ne("")
+    )
+
+    available_today_known = (
+        days_hours.fillna("")
+        .astype(str)
+        .str.contains(current_day, case=False, regex=False)
+    )
+
+    available_today_mask = (~days_hours_nonempty) | (days_hours_nonempty & available_today_known)
+
+    return status_mask & available_today_mask
 
 
 def _eligibility_mask(foodbank_df, selected_eligibility):
@@ -93,6 +112,7 @@ def get_foodbank_mask(  # pylint: disable=too-many-arguments,too-many-positional
     user_lat=None,
     user_lon=None,
     max_distance_miles=25,
+    current_day=None,
 ):
     """
     Create a boolean mask for filtering the food bank dataframe.
@@ -108,7 +128,7 @@ def get_foodbank_mask(  # pylint: disable=too-many-arguments,too-many-positional
     selected_days = selected_days or []
     foodbank_mask = np.ones(len(foodbank_df), dtype=bool)
     foodbank_mask &= _resource_type_mask(foodbank_df, resource_type)
-    foodbank_mask &= _operational_status_mask(foodbank_df, open_only)
+    foodbank_mask &= _operational_status_mask(foodbank_df, open_only, current_day)
     foodbank_mask &= _eligibility_mask(foodbank_df, selected_eligibility)
     foodbank_mask &= _day_mask(foodbank_df, selected_days)
     foodbank_mask &= _distance_mask(foodbank_df, user_lat, user_lon, max_distance_miles)
