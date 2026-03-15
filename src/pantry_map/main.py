@@ -14,17 +14,55 @@ sys.path.append(os.path.join(PROJECT_ROOT, "src"))
 
 # pylint: disable=wrong-import-position
 from bokeh.io import curdoc
-from bokeh.models import Div
-from pantry_map.data.loader import get_foodbank_df
+from bokeh.models import ColumnDataSource, CDSView, BooleanFilter, TapTool
+from pantry_map.data.loader import get_foodbank_df, get_shapes_df, get_transit_df, get_transfers_df
+from pantry_map.components.map import (
+    add_markers, add_routes, create_map, update_route, clear_routes
+)
 from pantry_map.components.layout import create_sidebar, create_layout, format_foodbank_list
 from pantry_map.filters.mask import get_foodbank_mask
+from pantry_map.services.route import CalculateRoute
 from pantry_map.utilities.utility import (
     validate_address,
     geocode_address,
+    lat_lon_to_mercator,
 )
 
 # 1. Load Data
+shapes_df, grouped_shapes_df = get_shapes_df()
+grouped_shapes_source = ColumnDataSource(grouped_shapes_df)
+
+transit_df = get_transit_df()
+transfers_df = get_transfers_df()
+
 foodbank_df = get_foodbank_df()
+foodbank_initial_mask = [True] * len(foodbank_df)
+foodbank_source = ColumnDataSource(foodbank_df)
+foodbank_view = CDSView(filter=BooleanFilter(foodbank_initial_mask))
+
+# Initialize drawn sources
+user_source = ColumnDataSource({"x": [], "y": []})
+foodbank_highlight_source = ColumnDataSource({"x": [], "y": []})
+route_source = ColumnDataSource({
+    "xs": [],
+    "ys": [],
+    "color": []
+})
+
+route_planner = CalculateRoute(foodbank_df, transit_df, transfers_df)
+
+x_min, x_max = foodbank_df['x'].min(), foodbank_df['x'].max()
+y_min, y_max = foodbank_df['y'].min(), foodbank_df['y'].max()
+
+map_fig = create_map(x_min, x_max, y_min, y_max)
+add_routes(map_fig, grouped_shapes_source, route_source)
+foodbank_markers = add_markers(
+    map_fig, user_source, foodbank_highlight_source, foodbank_source, foodbank_view
+)
+taptool = map_fig.select_one(TapTool)
+if taptool is not None:
+    taptool.renderers = [foodbank_markers]
+
 
 # 2. Setup Side Panel
 sidebar_layout, sidebar_widgets = create_sidebar()
@@ -39,19 +77,7 @@ clear_button = sidebar_widgets['clear_button']
 location_list = sidebar_widgets['location_list']
 results_div = sidebar_widgets['results_div']
 
-# Placeholder for the Map (being worked on by teammate)
-map_placeholder = Div(
-    text="""
-    <div style='display: flex; align-items: center; justify-content: center; height: 100%;
-    background: #f0f2f5; border: 2px dashed #ccc; border-radius: 8px; color: #666;'>
-        <h2>Map Component Placeholder</h2>
-        <p style='margin-left: 20px;'>Map features are currently being developed by another teammate.</p>
-    </div>""",
-    sizing_mode="stretch_both"
-)
-
 user_location = {"lat": None, "lon": None}
-
 
 def _selected_labels(checkbox_group):
     return [checkbox_group.labels[idx] for idx in checkbox_group.active]
@@ -59,7 +85,7 @@ def _selected_labels(checkbox_group):
 
 # 3. Callbacks
 def update():
-    """Update the side panel listing based on filters."""
+    """Update the map view and sidebar list based on all active filters."""
     labels = list(resource_type_selector.labels)
     active = resource_type_selector.active
     if active is None:
@@ -85,14 +111,25 @@ def update():
         user_lon=user_location["lon"],
         max_distance_miles=distance_slider.value,
     )
-    filtered_df = foodbank_df[foodbank_mask]
-    location_list.text = format_foodbank_list(filtered_df.head(20))
+    foodbank_view.filter = BooleanFilter(foodbank_mask.tolist())
+    location_list.text = format_foodbank_list(foodbank_df[foodbank_mask].head(20))
+
+    # Clear highlight and route if the selected food bank is no longer visible
+    selected = foodbank_source.selected.indices
+    if selected and not foodbank_mask[selected[0]]:
+        clear_routes(foodbank_highlight_source, foodbank_source, route_source)
 
 
 def on_search_click():
-    """Handle address search for side panel listing."""
+    """Handle click event for the search button.
+
+    1. Validate address input
+    2. Geocode address to find longitude and latitude
+    3. Place user marker on the map
+    4. Apply all filters including distance from the entered address
+    """
     address = address_input.value
-    is_valid, msg, cleaned_address = validate_address(address)
+    is_valid, msg, validated_address = validate_address(address)
 
     if not is_valid:
         results_div.text = f"<p style='color:red'>{msg}</p>"
@@ -100,16 +137,23 @@ def on_search_click():
 
     sidebar_widgets["results_div"].text = ""
 
-    # get lat and lon
-    lat, lon = geocode_address(cleaned_address)
+    lat, lon = geocode_address(validated_address)
     if lat is None or lon is None:
-        results_div.text = "<p style='color:red'>Could not find address.</p>"
+        results_div.text = "<p style='color:red'>Could not find this address. Please try again.</p>"
         return
+
+    clear_routes(foodbank_highlight_source, foodbank_source, route_source)
+    user_x, user_y = lat_lon_to_mercator(lat, lon)
+    user_source.data = {
+        "x": [user_x],
+        "y": [user_y]
+    }
 
     user_location["lat"] = lat
     user_location["lon"] = lon
-
+    route_planner.set_user_location((lat, lon))
     update()
+
     sidebar_widgets["results_div"].text = (
         "<p style='color:green'>Address validated. Results updated.</p>"
     )
@@ -140,6 +184,42 @@ def on_clear_click():
     results_div.text = ""
     update()
 
+    # Clear results message
+    sidebar_widgets["results_div"].text = ""
+
+    # Clear rendered routes from user to food bank
+    route_planner.set_user_location(None)
+    user_location["lat"] = None
+    user_location["lon"] = None
+    user_source.data = {"x": [], "y": []}
+    clear_routes(foodbank_highlight_source, foodbank_source, route_source)
+
+
+def marker_callback(attr, old, new):
+    """Handle tap selection on a food bank marker."""
+    del attr, old
+    if not new:
+        clear_routes(foodbank_highlight_source, foodbank_source, route_source)
+        location_list.text = format_foodbank_list(
+            foodbank_df[foodbank_view.filter.booleans].head(20)
+        )
+        return
+
+    # Route to the first selected marker; show all selected in the sidebar
+    idx = new[0]
+
+    foodbank_loc = (
+        foodbank_source.data["x"][idx],
+        foodbank_source.data["y"][idx]
+    )
+    foodbank_id = foodbank_source.data["bank_id"][idx]
+    est_time, route = route_planner.get_route_to_destination(foodbank_id)
+    sidebar_widgets["results_div"].text = f"Estimated travel time: {est_time}"
+    update_route(route, foodbank_loc, shapes_df, foodbank_highlight_source, route_source)
+
+    selected_rows = foodbank_df.iloc[new]
+    location_list.text = format_foodbank_list(selected_rows)
+
 
 # 4. Wire up callbacks
 resource_type_selector.on_change("active", lambda attr, old, new: update())
@@ -150,11 +230,12 @@ day_group.on_change("active", lambda attr, old, new: update())
 address_input.on_change("value", on_address_change)
 search_button.on_click(on_search_click)
 clear_button.on_click(on_clear_click)
+foodbank_source.selected.on_change("indices", marker_callback)  # pylint: disable=no-member
 
 # Initial population
 update()
 
 # 5. Assemble Layout
-layout = create_layout(map_placeholder, sidebar_layout)
+layout = create_layout(map_fig, sidebar_layout)
 curdoc().add_root(layout)
-curdoc().title = "PantryMap - Side Panel"
+curdoc().title = "PantryMap"

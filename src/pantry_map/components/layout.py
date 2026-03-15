@@ -153,7 +153,10 @@ def create_sidebar():
     # Placeholder for results / location list
     results_div = Div(text="", width=360)
     location_list = Div(
-        text="<p style='color: #666;'>Loading list...</p>", sizing_mode="stretch_width")
+        text="<p style='color: #666;'>Loading list...</p>",
+        sizing_mode="stretch_width",
+        height=500,
+        styles={"overflow-y": "auto"})
 
     sidebar_layout = column(
         Div(
