@@ -84,7 +84,7 @@ def _distance_mask(foodbank_df, user_lat, user_lon, max_distance_miles):
     return foodbank_df.apply(_within_distance, axis=1)
 
 
-def get_foodbank_mask(
+def get_foodbank_mask(  # pylint: disable=too-many-arguments
     foodbank_df,
     resource_type="Both",
     open_only=False,

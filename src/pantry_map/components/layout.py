@@ -6,12 +6,12 @@ and the main layout of the application. It also includes helper functions
 for formatting food bank information in HTML.
 """
 
+import html
 from datetime import datetime
 import pandas as pd
 from bokeh.layouts import column, row
 from bokeh.models import Div, TextInput, Button, Slider, CheckboxGroup, RadioButtonGroup, LayoutDOM
 from pantry_map.utilities.constants import COLORS
-import html
 
 def is_open_today(hours_str):
     """
@@ -46,24 +46,24 @@ def is_open_today(hours_str):
 
     return False
 
-def format_foodbank_list(df):
+def format_foodbank_list(foodbank_data):
     """
     Generate HTML for the list of food banks.
 
     Args:
-        df (pd.DataFrame): Dataframe containing food bank information.
+        foodbank_data (pd.DataFrame): Dataframe containing food bank information.
 
     Returns:
         str: HTML string representing the list of food banks.
     """
-    if df is None or df.empty:
+    if foodbank_data is None or foodbank_data.empty:
         return ("<div style='padding: 20px; text-align: center; color: #666;'>"
                 "No food banks found.</div>")
 
     cards = []
-    show_distance = 'distance' in df.columns
+    show_distance = 'distance' in foodbank_data.columns
 
-    for _, row_data in df.iterrows():
+    for _, row_data in foodbank_data.iterrows():
         phone = row_data['Phone Number'] if pd.notna(row_data['Phone Number']) else "Not available"
         dist_html = (
             f"<div style='margin-top: 8px; font-size: 13px; font-weight: 600; color: #6a737d;'>"
@@ -121,12 +121,9 @@ def format_foodbank_list(df):
     return (f"<div style='max-height: 520px; overflow-y: auto; padding: 10px; "
             f"background: #fafbfc;'>{cards_joined}</div>")
 
-def create_sidebar(foodbank_df):
+def create_sidebar():
     """
     Create the sidebar layout and widgets.
-
-    Args:
-        foodbank_df (pd.DataFrame): Dataframe containing food bank information.
 
     Returns:
         tuple: (sidebar_layout, dict_of_widgets)
@@ -167,15 +164,20 @@ def create_sidebar(foodbank_df):
             </div>""",
             sizing_mode="stretch_width"
         ),
-        Div(text="<div style='font-size:12px; font-weight:600; margin: 4px 0;'>Food resource type</div>"),
+        Div(text="<div style='font-size:12px; font-weight:600; margin: 4px 0;'>"
+            "Food resource type</div>"),
         resource_type_selector,
-        Div(text="<div style='font-size:12px; font-weight:600; margin: 8px 0 2px;'>Distance from address</div>"),
+        Div(text="<div style='font-size:12px; font-weight:600; margin: 8px 0 2px;'>"
+            "Distance from address</div>"),
         distance_slider,
-        Div(text="<div style='font-size:12px; font-weight:600; margin: 8px 0 2px;'>Operational status</div>"),
+        Div(text="<div style='font-size:12px; font-weight:600; margin: 8px 0 2px;'>"
+            "Operational status</div>"),
         open_only_toggle,
-        Div(text="<div style='font-size:12px; font-weight:600; margin: 8px 0 2px;'>Eligibility</div>"),
+        Div(text="<div style='font-size:12px; font-weight:600; margin: 8px 0 2px;'>"
+            "Eligibility</div>"),
         eligibility_group,
-        Div(text="<div style='font-size:12px; font-weight:600; margin: 8px 0 2px;'>Available days</div>"),
+        Div(text="<div style='font-size:12px; font-weight:600; margin: 8px 0 2px;'>"
+            "Available days</div>"),
         day_group,
         address_input,
         row(search_button, clear_button, width=360),

@@ -27,7 +27,7 @@ from pantry_map.utilities.utility import (
 foodbank_df = get_foodbank_df()
 
 # 2. Setup Side Panel
-sidebar_layout, sidebar_widgets = create_sidebar(foodbank_df)
+sidebar_layout, sidebar_widgets = create_sidebar()
 resource_type_selector = sidebar_widgets['resource_type_selector']
 distance_slider = sidebar_widgets['distance_slider']
 open_only_toggle = sidebar_widgets['open_only_toggle']
@@ -71,7 +71,7 @@ def update():
             resource_type = None
     else:
         resource_type = labels[active]
-    open_only = 0 in open_only_toggle.active
+    open_only = bool(open_only_toggle.active)
     selected_eligibility = _selected_labels(eligibility_group)
     selected_days = _selected_labels(day_group)
 
@@ -110,10 +110,13 @@ def on_search_click():
     user_location["lon"] = lon
 
     update()
-    sidebar_widgets["results_div"].text = "<p style='color:green'>Address validated. Results updated.</p>"
+    sidebar_widgets["results_div"].text = (
+        "<p style='color:green'>Address validated. Results updated.</p>"
+    )
 
 
 def on_address_change(attr, old, new):
+    """Clear stored user location when the address text changes."""
     del attr, old, new
     # Clear stored user location when the address text changes so that
     # subsequent filter updates do not use a stale location.
