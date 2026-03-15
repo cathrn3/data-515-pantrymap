@@ -73,7 +73,7 @@ class TestCalculateRoute(unittest.TestCase):
             ("route1stop2", "route3stop2"),
             ("route1stop2", "route4stop2"),
         }
-        self.assertTrue(set(graph.edges()), expected_edges)
+        self.assertEqual(set(graph.edges()), expected_edges)
         self.assertEqual(graph["route4stop1"]["route4stop2"]["weight"], 5)
         self.assertEqual(graph["route1stop2"]["route2stop1"]["weight"], 30)
 
