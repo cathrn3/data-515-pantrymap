@@ -62,7 +62,7 @@ if taptool is not None:
 
 # 2. Setup Side Panel
 sidebar_layout, sidebar_widgets = create_sidebar()
-resource_types = sidebar_widgets['resource_type_selector']
+resource_type_selector = sidebar_widgets['resource_type_selector']
 distance_slider = sidebar_widgets['distance_slider']
 open_only_toggle = sidebar_widgets['open_only_toggle']
 eligibility_group = sidebar_widgets['eligibility_group']
@@ -75,16 +75,28 @@ location_list = sidebar_widgets['location_list']
 
 user_location = {"lat": None, "lon": None}
 
+def _selected_labels(checkbox_group):
+    return [checkbox_group.labels[idx] for idx in checkbox_group.active]
+
 
 # 3. Callbacks
 def update():
     """Update the map view and sidebar list based on all active filters."""
-    labels = list(resource_types.labels)
-    active = resource_types.active
+    labels = list(resource_type_selector.labels)
+    active = resource_type_selector.active
+    if active is None:
+        if "Both" in labels:
+            resource_type = "Both"
+        elif labels:
+            resource_type = labels[0]
+        else:
+            resource_type = None
+    else:
+        resource_type = labels[int(active)]
     resource_type = labels[int(active)] if active is not None else "Both"
     open_only = bool(open_only_toggle.active)
-    selected_eligibility = [eligibility_group.labels[i] for i in eligibility_group.active]
-    selected_days = [day_group.labels[i] for i in day_group.active]
+    selected_eligibility = _selected_labels(eligibility_group)
+    selected_days = _selected_labels(day_group)
 
     foodbank_mask = get_foodbank_mask(
         foodbank_df,
@@ -138,6 +150,10 @@ def on_search_click():
     user_location["lon"] = lon
     route_planner.set_user_location((lat, lon))
     update()
+
+    sidebar_widgets["results_div"].text = (
+        "<p style='color:green'>Address validated. Results updated.</p>"
+    )
 
 
 def on_address_change(attr, old, new):
@@ -198,7 +214,7 @@ def marker_callback(attr, old, new):
 
 
 # 4. Wire up callbacks
-resource_types.on_change("active", lambda attr, old, new: update())
+resource_type_selector.on_change("active", lambda attr, old, new: update())
 distance_slider.on_change("value", lambda attr, old, new: update())
 open_only_toggle.on_change("active", lambda attr, old, new: update())
 eligibility_group.on_change("active", lambda attr, old, new: update())
