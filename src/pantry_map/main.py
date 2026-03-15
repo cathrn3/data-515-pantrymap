@@ -35,8 +35,9 @@ y_min, y_max = foodbank_df['y'].min(), foodbank_df['y'].max()
 map_fig = create_map(x_min, x_max, y_min, y_max)
 add_routes(map_fig, grouped_shapes_source, route_source)
 foodbank_markers = add_markers(map_fig, user_source, foodbank_highlight_source, foodbank_source, foodbank_view)
-taptool = TapTool(renderers=[foodbank_markers])
-map_fig.add_tools(taptool)
+taptool = map_fig.select_one(TapTool)
+if taptool is not None:
+    taptool.renderers = [foodbank_markers]
 
 sidebar_layout, sidebar_widgets = create_sidebar(foodbank_df)
 resource_types = sidebar_widgets['resource_type_dropdown']
