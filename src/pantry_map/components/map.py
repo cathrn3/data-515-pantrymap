@@ -91,9 +91,9 @@ def update_route(route, foodbank_loc, source, foodbank_highlight_source, route_s
 
     # Render each route along the found path
     for _, group in grouped:
-        start_idx = group.index.min()
-        end_idx = group.index.max()
-        segment = source.loc[start_idx:end_idx]
+        # Select only the rows belonging to this route_id, without assuming
+        # that they occupy a single contiguous index range in `source`.
+        segment = source.loc[group.index].sort_index()
 
         xs.append(segment["x"].tolist())
         ys.append(segment["y"].tolist())
