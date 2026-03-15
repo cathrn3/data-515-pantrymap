@@ -23,7 +23,6 @@ from pantry_map.services.route import CalculateRoute
 from pantry_map.utilities.utility import (
     validate_address,
     geocode_address,
-    find_nearest_foodbanks,
     lat_lon_to_mercator,
 )
 
@@ -59,6 +58,7 @@ foodbank_markers = add_markers(map_fig, user_source, foodbank_highlight_source, 
 taptool = map_fig.select_one(TapTool)
 if taptool is not None:
     taptool.renderers = [foodbank_markers]
+
 
 # 2. Setup Side Panel
 sidebar_layout, sidebar_widgets = create_sidebar()
@@ -99,14 +99,19 @@ def update():
     foodbank_view.filter = BooleanFilter(foodbank_mask.tolist())
     location_list.text = format_foodbank_list(foodbank_df[foodbank_mask].head(20))
 
+    # Clear highlight and route if the selected food bank is no longer visible
+    selected = foodbank_source.selected.indices
+    if selected and not foodbank_mask[selected[0]]:
+        clear_routes(foodbank_highlight_source, foodbank_source, route_source)
+
 
 def on_search_click():
     """Handle click event for the search button.
 
     1. Validate address input
     2. Geocode address to find longitude and latitude
-    3. Highlight user's location on the map
-    4. Calculate 30 nearest foodbanks
+    3. Place user marker on the map
+    4. Apply all filters including distance from the entered address
     """
     address = address_input.value
     is_valid, msg, validated_address = validate_address(address)
@@ -129,14 +134,10 @@ def on_search_click():
         "y": [user_y]
     }
 
-    # Highlight nearest markers on the map
-    nearest_df = find_nearest_foodbanks(foodbank_df, lat, lon, k=30)
-    nearest_mask = foodbank_df.index.isin(nearest_df.index)
-    foodbank_view.filter = BooleanFilter(nearest_mask.tolist())
-
     user_location["lat"] = lat
     user_location["lon"] = lon
     route_planner.set_user_location((lat, lon))
+    update()
 
 
 def on_address_change(attr, old, new):
@@ -175,9 +176,12 @@ def marker_callback(attr, old, new):
     """Handle tap selection on a food bank marker."""
     if not new:
         clear_routes(foodbank_highlight_source, foodbank_source, route_source)
+        location_list.text = format_foodbank_list(
+            foodbank_df[foodbank_view.filter.booleans].head(20)
+        )
         return
 
-    # Only get one marker if multiple were selected
+    # Route to the first selected marker; show all selected in the sidebar
     idx = new[0]
 
     foodbank_loc = (
@@ -188,6 +192,9 @@ def marker_callback(attr, old, new):
     est_time, route = route_planner.get_route_to_destination(foodbank_id)
     sidebar_widgets["results_div"].text = f"Estimated travel time: {est_time}"
     update_route(route, foodbank_loc, shapes_df, foodbank_highlight_source, route_source)
+
+    selected_rows = foodbank_df.iloc[new]
+    location_list.text = format_foodbank_list(selected_rows)
 
 
 # 4. Wire up callbacks
