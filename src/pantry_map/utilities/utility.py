@@ -10,7 +10,7 @@ from math import radians, sin, cos, sqrt, atan2, pi
 
 import numpy as np
 from geopy.geocoders import Nominatim
-from geopy.exc import GeocoderTimedOut
+from geopy.exc import GeocoderTimedOut, GeocoderServiceError, GeopyError
 
 def color_from_id(route_id):
     """
@@ -109,7 +109,7 @@ def geocode_address(address):
                     return None, None
 
                 return lat, lon
-        except (GeocoderTimedOut, Exception) as err:  # pylint: disable=broad-exception-caught
+        except (GeocoderTimedOut, GeocoderServiceError, GeopyError) as err:
             print(f"Geocoding error for '{address}': {err}")
             continue
     return None, None
@@ -129,7 +129,7 @@ def find_nearest_foodbanks(foodbank_df, user_lat, user_lon, k=5):
                       sorted by distance.
     """
     # Calculate distance to each food bank
-    foodbank_df_copy = foodbank_df.copy()
+    foodbank_df_copy = foodbank_df.dropna(subset=['Latitude', 'Longitude']).copy()
     foodbank_df_copy['distance'] = foodbank_df_copy.apply(
         lambda row: calculate_distance(user_lat, user_lon, row['Latitude'], row['Longitude']),
         axis=1

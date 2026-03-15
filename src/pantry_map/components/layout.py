@@ -266,7 +266,7 @@ def create_layout(fig, sidebar):
     Assemble the final application layout.
 
     Args:
-        fig (Figure): The map figure component.
+        fig (LayoutDOM): The main content component (e.g., map figure or placeholder Div).
         sidebar (LayoutDOM): The sidebar layout component.
 
     Returns:

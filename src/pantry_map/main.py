@@ -78,7 +78,7 @@ def on_clear_click():
     update()
 
 # 4. Initialization
-resource_types.on_change("value", lambda attr, old, new: update())
+resource_types.on_change("value", lambda _attr, _old, _new: update())
 search_button.on_click(on_search_click)
 clear_button.on_click(on_clear_click)
 

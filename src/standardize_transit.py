@@ -61,9 +61,6 @@ def standardize_agency(gtfs_folder, output_prefix):
     print(f"✅ {output_prefix} standardized and saved (including shapes).")
 
 if __name__ == "__main__":
-    # Ensure the directory exists
-    os.makedirs("data/processed", exist_ok=True)
-
     # -------- KING COUNTY --------
     standardize_agency(
         gtfs_folder="data_preprocessing/data/king_county",

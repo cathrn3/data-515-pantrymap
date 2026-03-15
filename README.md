@@ -30,7 +30,7 @@
 ### Technologies
 - **Backend/Logic**: Python, Pandas, GeoPandas
 - **Visualization**: Bokeh, Folium, Plotly
-- **Web App**: Dash/Flask
+- **Web App**: Bokeh server (`bokeh serve`)
 - **Environment**: Conda / Pip
 
 ### Data Sources
@@ -49,7 +49,7 @@
 1. **Clone the repository:**
    ```bash
    git clone https://github.com/cathrn3/data-515-pantrymap.git
-   cd pantrymap
+   cd data-515-pantrymap
    ```
 
 2. **Set up the environment:**
