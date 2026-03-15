@@ -157,7 +157,6 @@ def on_address_change(attr, old, new):
     user_location["lat"] = None
     user_location["lon"] = None
     filter_widgets["results_div"].text = ""
-    update()
 
 def on_clear_click():
     """Handle click event for clear.
