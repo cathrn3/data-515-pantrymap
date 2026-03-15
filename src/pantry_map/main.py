@@ -70,8 +70,8 @@ day_group = sidebar_widgets['day_group']
 address_input = sidebar_widgets['address_input']
 search_button = sidebar_widgets['search_button']
 clear_button = sidebar_widgets['clear_button']
-results_div = sidebar_widgets['results_div']
 location_list = sidebar_widgets['location_list']
+results_div = sidebar_widgets['results_div']
 
 user_location = {"lat": None, "lon": None}
 
@@ -93,7 +93,6 @@ def update():
             resource_type = None
     else:
         resource_type = labels[int(active)]
-    resource_type = labels[int(active)] if active is not None else "Both"
     open_only = bool(open_only_toggle.active)
     selected_eligibility = _selected_labels(eligibility_group)
     selected_days = _selected_labels(day_group)
@@ -159,6 +158,8 @@ def on_search_click():
 def on_address_change(attr, old, new):
     """Clear stored user location when the address text changes."""
     del attr, old, new
+    # Clear stored user location when the address text changes so that
+    # subsequent filter updates do not use a stale location.
     user_location["lat"] = None
     user_location["lon"] = None
     sidebar_widgets["results_div"].text = ""
@@ -171,11 +172,13 @@ def on_clear_click():
     2. Clears input in search bar
     """
     # Reset map markers to show all foodbanks
-    reset_mask = [True] * len(foodbank_df)
-    foodbank_view.filter = BooleanFilter(reset_mask)
+    user_location["lat"] = None
+    user_location["lon"] = None
 
     # Clear the address input box
     address_input.value = ""
+    results_div.text = ""
+    update()
 
     # Clear results message
     sidebar_widgets["results_div"].text = ""
