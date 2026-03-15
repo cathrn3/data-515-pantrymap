@@ -13,10 +13,12 @@ class calculateRoute:
     Find the shortest path via public transportation between a user and a selected food bank
     using Dijkstra's algorithm.
     Food banks and public transit stops are reachable by the user if they are within 1 mile.
-    Bus stop transfers are reachable if they are within .25 miles of each other.
-    The estimated time along a route is calculated from the schedule of the route in the dataset.
-    The estimated walking time to a node is calculated using the distance and assumed walking speed.
-    The estimaed time taken to make a bus transfer is set at 10 minutes.
+    The estimated in-vehicle time along a route is calculated from the schedule information
+    in the transit dataset.
+    The estimated walking time to a node is calculated using the distance and an assumed
+    walking speed.
+    The estimated time taken to make a bus transfer is taken from the transfer data
+    (e.g., ``transfers_df['estimated_time']``) rather than being a fixed constant.
     """
     USER_ALLOWED_DIST = 1 # Allow 1 mile between user and nodes
     WALKING_SPEED = 2 # Assumed walking speed at 2 MPH
