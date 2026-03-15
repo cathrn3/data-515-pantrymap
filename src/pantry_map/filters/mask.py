@@ -31,12 +31,22 @@ def _operational_status_mask(foodbank_df, open_only, current_day=None):
         .eq("open")
     )
 
-    available_today_mask = (
-        foodbank_df["Days/Hours"]
-        .fillna("")
+    # Treat missing/blank Days/Hours as "unknown" schedule:
+    # - Only enforce the day-of-week check when Days/Hours is non-empty
+    # - Include rows with empty/missing Days/Hours as long as status is open
+    days_hours = foodbank_df["Days/Hours"]
+    days_hours_nonempty = (
+        days_hours.notna()
+        & days_hours.astype(str).str.strip().ne("")
+    )
+
+    available_today_known = (
+        days_hours.fillna("")
         .astype(str)
         .str.contains(current_day, case=False, regex=False)
     )
+
+    available_today_mask = (~days_hours_nonempty) | (days_hours_nonempty & available_today_known)
 
     return status_mask & available_today_mask
 
