@@ -4,7 +4,7 @@ from pantry_map.data.loader import get_foodbank_df, get_shapes_df, get_transit_d
 from pantry_map.components.map import add_markers, add_routes, create_map, update_route, clear_routes
 from pantry_map.components.layout import create_sidebar, create_layout
 from pantry_map.filters.mask import get_foodbank_mask
-from services.route import calculateRoute
+from pantry_map.services.route import calculateRoute
 from pantry_map.utilities.utility import validate_address, geocode_address, find_nearest_foodbanks, lat_lon_to_mercator
 
 shapes_df, grouped_shapes_df = get_shapes_df()
