@@ -1,6 +1,25 @@
+"""
+Map components for the PantryMap Bokeh application.
+
+This module provides functions to create the Bokeh map figure and add
+layers like markers and routes to the map.
+"""
+
 from bokeh.plotting import figure
 
 def create_map(x_min, x_max, y_min, y_max):
+    """
+    Create a Bokeh figure with a Mercator tile background.
+
+    Args:
+        x_min (float): Minimum X coordinate (Mercator).
+        x_max (float): Maximum X coordinate (Mercator).
+        y_min (float): Minimum Y coordinate (Mercator).
+        y_max (float): Maximum Y coordinate (Mercator).
+
+    Returns:
+        figure: A Bokeh figure object.
+    """
     x_padding = (x_max - x_min) * 0.15
     y_padding = (y_max - y_min) * 0.15
 
@@ -24,7 +43,20 @@ def create_map(x_min, x_max, y_min, y_max):
     return fig
 
 
-def add_markers(fig, user_source, foodbank_highlight_source, foodbank_source, foodbank_view=None):    
+def add_markers(fig, user_source, foodbank_highlight_source, foodbank_source, foodbank_view=None):
+    """
+    Add circle markers to the provided Bokeh figure.
+
+    Args:
+        fig (figure): The Bokeh figure to add markers to.
+        user_source (ColumnDataSource): Data source for the user location marker.
+        foodbank_highlight_source (ColumnDataSource): Data source for highlighted foodbank markers.
+        foodbank_source (ColumnDataSource): Data source for all foodbank markers.
+        foodbank_view (CDSView, optional): A view to filter the foodbank data source.
+
+    Returns:
+        GlyphRenderer: The foodbank marker glyph renderer.
+    """
     _ = fig.circle(
         x="x",
         y="y",
@@ -51,10 +83,18 @@ def add_markers(fig, user_source, foodbank_highlight_source, foodbank_source, fo
         color="red",
         source=user_source
     )
-    
+
     return foodbank_markers
 
 def add_routes(fig, grouped_shapes_source, route_source):
+    """
+    Add multi-line routes to the provided Bokeh figure.
+
+    Args:
+        fig (figure): The Bokeh figure to add routes to.
+        grouped_shapes_source (ColumnDataSource): Data source for transit shape routes.
+        route_source (ColumnDataSource): Data source for the active calculated route.
+    """
     fig.multi_line(
         xs="x",
         ys="y",

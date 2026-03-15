@@ -1,55 +1,89 @@
-# data-515-pantrymap
-
 # PantryMap: Accessible Food Bank Locator
+
+[![Python Version](https://img.shields.io/badge/python-3.8%2B-blue.svg)](https://www.python.org/)
+[![License: MIT](https://img.shields.io/badge/License-MIT-yellow.svg)](https://opensource.org/licenses/MIT)
+[![.github/workflows/build_test.yml](https://github.com/cathrn3/data-515-pantrymap/actions/workflows/build_test.yml/badge.svg)](https://github.com/cathrn3/data-515-pantrymap/actions/workflows/build_test.yml)
+[![Coverage Status](https://coveralls.io/repos/github/cathrn3/data-515-pantrymap/badge.svg?branch=main)](https://coveralls.io/github/cathrn3/data-515-pantrymap?branch=main)
+
 
 ## Project Title
 **PantryMap: Accessible Food Bank Locator**
 
-## Team Members
-- Stuti Gaonkar
-- Sowmya Dhadheech
-- Catherine Wu
-- Jolene Pern
+**PantryMap** is a research-driven tool designed to improve emergency food accessibility in Seattle. By integrating food bank data with public transportation schedules, we aim to bridge the gap between food resources and the communities that need them most.
 
-## Project Type
-**Research & Tool**
+---
 
-## Questions of Interest
+## 🚀 Project Overview
 
+### Questions of Interest
 1. **What is the current state of emergency food accessibility in Seattle?**
    - Where are operational emergency food banks and meals in Seattle today?
    - How accessible are they via public transportation?
 
 2. **How can we make more accessible emergency food banks?**
-   - Can we find the best locations for new food banks such that they would serve an under-served area of Seattle and be accessible by public transportation?
-   - Are there any existing food banks that don't have enough public transportation access?
+   - Can we find the best locations for new food banks to serve under-served areas?
+   - Which existing food banks lack sufficient public transportation access?
 
-## Project Goal & Output
+### Key Features
+- **Interactive Map**: Visualize operational food banks and meal sites across Seattle.
+- **Smart Filtering**: Filter by operation times, service types, and specific community needs.
+- **Transit Integration**: Get real-time public transportation routes to your selected food bank.
 
-We will produce a web application that allows users to:
-- **View a Map of Operational Emergency Food Banks/Meals** - Visual representation of food banks and meals within Seattle
-- **Filter for their needs** - Filter based on food bank operation times or who they serve
-- **Get Directions** - See public transportation routes to a food bank when selected. 
+---
 
-**Deliverables:**
-- Interactive web application
-- Research findings to questions above
+## 🛠 Tech Stack & Data
 
-## Data Sources
+### Technologies
+- **Backend/Logic**: Python, Pandas, GeoPandas
+- **Visualization**: Bokeh, Folium, Plotly
+- **Web App**: Bokeh server (`bokeh serve`)
+- **Environment**: Conda / Pip
 
-### 1. Emergency Food and Meals Seattle and King County
-- **Content:** A list of emergency food (meals, food banks, etc.) available in Seattle and King County.
-- **Source:** https://data.seattle.gov/Community-and-Culture/Emergency-Food-and-Meals-Seattle-and-King-County/kkzf-ntnu/about_data
-- **Use:** Identify available emergency food to display within web app. 
+### Data Sources
+1. **[Emergency Food and Meals (King County)](https://data.seattle.gov/Community-and-Culture/Emergency-Food-and-Meals-Seattle-and-King-County/kkzf-ntnu/about_data)**: Comprehensive list of food resources.
+2. **[Puget Sound Consolidated GTFS](https://www.soundtransit.org/help-contacts/business-information/open-transit-data-otd/otd-downloads)**: Regional public transportation schedules.
 
-### 2. Puget Sound Consolidated GFTS Schedule
-- **Content:** Single, merged GFTS Schedule file set for the region. 
-- **Source:** Sound Transit - Open Transit Data (OTD) https://www.soundtransit.org/help-contacts/business-information/open-transit-data-otd/otd-downloads
-- **Use:** King County public transportation data
+---
 
-### Development
-To run the service locally, run the following commands:
-1. `conda env create -n <env name> -f environment.yml`
-2. `conda activate <env name>`
-3. `pip install -e .`
-4. `bokeh serve src/pantry_map/main.py --show`
+## 🏃 Getting Started
+
+### Prerequisites
+- [Conda](https://docs.conda.io/en/latest/) or [Mamba](https://mamba.readthedocs.io/en/latest/) (recommended)
+- Python 3.8+
+
+### Installation
+1. **Clone the repository:**
+   ```bash
+   git clone https://github.com/cathrn3/data-515-pantrymap.git
+   cd data-515-pantrymap
+   ```
+
+2. **Set up the environment:**
+   ```bash
+   conda env create -f environment.yml
+   conda activate pantrymap
+   ```
+   *Or using pip:*
+   ```bash
+   pip install -r requirements.txt
+   pip install -e .
+   ```
+
+3. **Run the application:**
+   ```bash
+   bokeh serve src/pantry_map/main.py --show
+   ```
+
+---
+
+## 👥 Team Members
+- **Stuti Gaonkar**
+- **Sowmya Dhadheech**
+- **Catherine Wu**
+- **Jolene Pern**
+
+---
+
+## 📄 License
+This project is licensed under the MIT License - see the [LICENSE](LICENSE) file for details.
+

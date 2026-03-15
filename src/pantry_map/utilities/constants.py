@@ -1,3 +1,10 @@
+"""
+Constants for the PantryMap application.
+
+This module defines common constants such as color palettes used across
+different components of the application.
+"""
+
 COLORS = {
     'bg': '#fafbfc',
     'border': '#e5e7eb',

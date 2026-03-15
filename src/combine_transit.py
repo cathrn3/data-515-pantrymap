@@ -1,6 +1,16 @@
+"""
+Script to combine transit datasets from King County and Sound Transit systems.
+
+This script merges standardized stops, trips, stop times, and shapes from both
+systems into unified CSV files.
+"""
+
 import pandas as pd
 
 def combine_transit():
+    """
+    Standardize and merge King County and Sound Transit datasets.
+    """
     print("Combining transit datasets...")
 
     # 1. Load standardized data
