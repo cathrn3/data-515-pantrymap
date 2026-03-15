@@ -9,7 +9,7 @@ from sklearn.neighbors import BallTree
 import logging
 
 
-class calculateRoute:
+class CalculateRoute:
     """
     Find the shortest path via public transportation between a user and a selected food bank
     using Dijkstra's algorithm.
