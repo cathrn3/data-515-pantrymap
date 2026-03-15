@@ -13,7 +13,7 @@
 
 ---
 
-## 🚀 Project Overview
+##  Project Overview
 
 ### Questions of Interest
 1. **What is the current state of emergency food accessibility in Seattle?**
@@ -31,7 +31,7 @@
 
 ---
 
-## 🛠 Tech Stack & Data
+##  Tech Stack & Data
 
 ### Technologies
 - **Backend/Logic**: Python, Pandas, GeoPandas
@@ -45,7 +45,7 @@
 
 ---
 
-## 🏃 Getting Started
+##  Getting Started
 
 ### Prerequisites
 - [Conda](https://docs.conda.io/en/latest/) or [Mamba](https://mamba.readthedocs.io/en/latest/) (recommended)
@@ -76,7 +76,7 @@
 
 ---
 
-## 👥 Team Members
+##  Team Members
 - **Stuti Gaonkar**
 - **Sowmya Dhadheech**
 - **Catherine Wu**
@@ -84,6 +84,6 @@
 
 ---
 
-## 📄 License
+##  License
 This project is licensed under the MIT License - see the [LICENSE](LICENSE) file for details.
 
