@@ -7,7 +7,7 @@ from pantry_map.utilities.constants import COLORS
 
 
 def _label(text):
-    return Div(text=f"<div style='font-size:12px; font-weight:600; margin:0 0 6px;'>{text}</div>")
+    return Div(text=f"<div style='font-size:12px; font-weight:700; margin:0 0 8px; color:#57606a; letter-spacing:0.2px;'>{text}</div>")
 
 
 def create_filter_bar():
@@ -34,25 +34,54 @@ def create_filter_bar():
     toolbar = column(
         Div(
             text="""
-            <div style='padding:8px 0 10px; font-size:11px; font-weight:700; text-transform:uppercase;
+            <div style='padding:8px 0 12px; font-size:11px; font-weight:700; text-transform:uppercase;
             color:#57606a; letter-spacing:0.5px;'>Search & Filters</div>
             """
         ),
         row(
-            column(_label("Resource type"), resource_type_selector, width=280),
-            column(_label("Operational status"), open_only_toggle, width=190),
-            column(distance_slider, width=280),
-            column(address_input, row(search_button, clear_button), width=390),
-            sizing_mode="stretch_width",
+            column(
+                _label("Resource type"),
+                resource_type_selector,
+                width=270,
+                styles={"padding": "12px", "border": "1px solid #e5e7eb", "border-radius": "10px", "background": "#ffffff"},
+            ),
+            column(
+                _label("Operational status"),
+                open_only_toggle,
+                width=190,
+                styles={"padding": "12px", "border": "1px solid #e5e7eb", "border-radius": "10px", "background": "#ffffff"},
+            ),
+            column(
+                _label("Distance"),
+                distance_slider,
+                width=270,
+                styles={"padding": "12px", "border": "1px solid #e5e7eb", "border-radius": "10px", "background": "#ffffff"},
+            ),
+            column(
+                _label("Eligibility"),
+                eligibility_group,
+                width=210,
+                styles={"padding": "12px", "border": "1px solid #e5e7eb", "border-radius": "10px", "background": "#ffffff"},
+            ),
+            column(
+                _label("Available days"),
+                day_group,
+                width=220,
+                styles={"padding": "12px", "border": "1px solid #e5e7eb", "border-radius": "10px", "background": "#ffffff"},
+            ),
+            column(
+                _label("Address"),
+                address_input,
+                row(search_button, clear_button),
+                width=350,
+                styles={"padding": "12px", "border": "1px solid #e5e7eb", "border-radius": "10px", "background": "#ffffff"},
+            ),
+            sizing_mode="fixed",
         ),
-        row(
-            column(_label("Eligibility"), eligibility_group, width=380),
-            column(_label("Available days"), day_group, width=600),
-            results_div,
-            sizing_mode="stretch_width",
-        ),
+        results_div,
         width=1400,
-        sizing_mode="stretch_width",
+        sizing_mode="fixed",
+        styles={"padding": "8px 16px 14px", "background": "#f6f8fa", "border-bottom": "1px solid #e5e7eb"},
     )
 
     return toolbar, {
@@ -83,12 +112,13 @@ def create_nearby_panel():
         Div(
             text=(
                 "<div style='font-size:12px; font-weight:700; letter-spacing:0.5px; "
-                "color:#57606a; margin:8px 0 10px;'>NEARBY FOOD BANKS</div>"
+                "color:#57606a; margin:4px 0 10px;'>NEARBY FOOD BANKS</div>"
             )
         ),
         location_list,
         width=380,
         sizing_mode="fixed",
+        styles={"padding": "10px", "background": "#f6f8fa", "border-right": "1px solid #e5e7eb"},
     )
 
     return panel, {"location_list": location_list}
@@ -131,7 +161,7 @@ def format_nearby_foodbanks(foodbank_data):
 
         cards.append(
             f"""
-            <div style='padding:14px; border:1px solid #e1e4e8; border-radius:8px; margin-bottom:10px; background:white;'>
+            <div style='padding:14px; border:1px solid #d8dee4; border-radius:10px; margin-bottom:10px; background:white; box-shadow:0 1px 2px rgba(0,0,0,0.04);'>
                 <div style='display:flex; justify-content:space-between; gap:10px; margin-bottom:6px;'>
                     <div style='font-size:16px; font-weight:700; color:#24292f; line-height:1.3;'>{agency}</div>
                     {status_badge}
@@ -156,9 +186,9 @@ def create_header():
     """Create page header."""
     return Div(
         text=f"""
-        <div style="background: {COLORS['bg']}; border-bottom: 1px solid {COLORS['border']}; padding: 28px 40px;">
+        <div style="background: {COLORS['bg']}; border-bottom: 1px solid {COLORS['border']}; padding: 24px 30px 20px;">
             <div style="max-width: 1600px; margin: 0 auto;">
-                <div style="display: flex; justify-content: space-between; align-items: center;">
+                <div style="display: flex; justify-content: center; align-items: center; text-align:center;">
                     <div>
                         <h1 style="margin: 0 0 8px 0; font-size: 32px; font-weight: 600; color: {COLORS['text_primary']}; letter-spacing: -0.5px;">
                             PantryMap
@@ -166,9 +196,7 @@ def create_header():
                         <p style="margin: 0; font-size: 14px; color: {COLORS['text_secondary']}; font-weight: 400;">
                             Food bank accessibility and public transit network
                         </p>
-                    </div>
-                    <div style="text-align: right; font-size: 12px; color: {COLORS['text_tertiary']};">
-                        Updated today
+                        <p style="margin:6px 0 0; font-size:12px; color: {COLORS['text_tertiary']};">Updated today</p>
                     </div>
                 </div>
             </div>
@@ -180,6 +208,7 @@ def create_header():
 
 def create_layout(fig, filter_bar, nearby_panel):
     """Create overall page layout."""
+    fig.styles = {"border-left": "1px solid #e5e7eb", "background": "#ffffff"}
     main_content = row(nearby_panel, fig, sizing_mode="stretch_both")
     return column(create_header(), filter_bar, main_content, sizing_mode="stretch_both")
 

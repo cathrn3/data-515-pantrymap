@@ -4,12 +4,18 @@ from pantry_map.utilities.utility import calculate_distance
 
 
 def _resource_type_mask(foodbank_df, resource_type):
-    resource_series = foodbank_df["Food Resource Type"].fillna("").astype(str)
+    resource_series = (
+        foodbank_df["Food Resource Type"]
+        .fillna("")
+        .astype(str)
+        .str.strip()
+        .str.lower()
+    )
 
     if resource_type == "Food Bank":
-        return resource_series.str.contains("Food Bank", case=False, regex=False)
+        return resource_series.str.contains("food bank", regex=False)
     if resource_type == "Meal":
-        return resource_series.str.contains("Meal", case=False, regex=False)
+        return resource_series.eq("meal")
     return np.ones(len(foodbank_df), dtype=bool)
 
 
