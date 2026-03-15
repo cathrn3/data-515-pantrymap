@@ -95,6 +95,9 @@ class CalculateRoute:
     def _get_nearby_nodes_to_food_bank(self, food_bank_id: str):
         """Temporarily connect the given food bank to the graph, returning a new copy of the graph"""
         food_bank = self.food_bank_df[self.food_bank_df['bank_id'] == food_bank_id]
+        if food_bank.empty:
+            # Explicitly handle unknown food bank IDs instead of raising IndexError
+            raise ValueError(f"Unknown food bank id: {food_bank_id}")
         coords = tuple(food_bank[['Latitude', 'Longitude']].iloc[0])
         transit_idx, transit_dist = self._get_nearby_nodes(self.transit_tree, coords, self.USER_ALLOWED_DIST)
 
@@ -116,6 +119,9 @@ class CalculateRoute:
             time, route = nx.single_source_dijkstra(new_graph, 'USER', food_bank_id, weight='weight')
             return time, route
         except (nx.NetworkXNoPath, nx.NodeNotFound):
+            return None, None
+        except ValueError:
+            # Handle unknown food bank IDs without logging as an unexpected error
             return None, None
         except Exception:
             logging.exception(
