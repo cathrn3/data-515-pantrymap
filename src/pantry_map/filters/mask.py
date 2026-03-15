@@ -1,16 +1,6 @@
 import numpy as np
 from pantry_map.utilities.utility import calculate_distance
 
-WEEKDAY_ORDER = [
-    "Monday",
-    "Tuesday",
-    "Wednesday",
-    "Thursday",
-    "Friday",
-    "Saturday",
-    "Sunday",
-]
-
 
 def _resource_type_mask(foodbank_df, resource_type):
     resource_series = foodbank_df["Food Resource Type"].fillna("").astype(str)
