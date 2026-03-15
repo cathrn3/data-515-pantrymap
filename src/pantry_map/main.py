@@ -58,7 +58,7 @@ def on_search_click():
     1. Validate address input
     2. Geocode address to find longitude and latitude
     3. Highlight user's location
-    4. Calculate 5 nearest foodbanks
+    4. Calculate 30 nearest foodbanks
     """
 
     # validate address input
