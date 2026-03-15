@@ -128,7 +128,6 @@ def create_sidebar():
     Returns:
         tuple: (sidebar_layout, dict_of_widgets)
     """
-main
     resource_type_selector = RadioButtonGroup(
         labels=["Both", "Food Bank", "Meal"],
         active=0,
@@ -159,7 +158,6 @@ main
         sizing_mode="stretch_width",
         height=500,
         styles={"overflow-y": "auto"})
-main
 
     toolbar = column(
         Div(
@@ -175,7 +173,6 @@ main
           
             <div style='padding: 5px 0; font-size: 12px; font-weight: 700; text-transform: uppercase;
             color: #57606a; letter-spacing: 0.5px;'>
- main
                 Search & Filters
             </div>""",
             sizing_mode="stretch_width"
@@ -365,12 +362,6 @@ def create_analytics_panel():
 
 
 def create_header():
-    """
-    Create the header component with a Div.
-
-    Returns:
-        Div: Bokeh Div component containing the header HTML.
-    """
     header_div = Div(text=f"""
         <div style="background: {COLORS['bg']}; border-bottom: 1px solid {COLORS['border']}; padding: 28px 40px;">
             <div style="max-width: 1600px; margin: 0 auto;">
@@ -396,21 +387,6 @@ def create_header():
     return header_div
 
 def create_layout(fig: LayoutDOM, sidebar: LayoutDOM) -> LayoutDOM:
-    """
-    Assemble the final application layout.
-
-    Args:
-        fig (LayoutDOM): The main content component (e.g., map figure or placeholder Div).
-        sidebar (LayoutDOM): The sidebar layout component.
-
-def create_layout(fig, filter_bar, nearby_panel):
-    header_div = create_header()
-    main_content = row(
-        nearby_panel,
-
-    Returns:
-        LayoutDOM: The final assembled column layout.
-    """
     analytics_div = Div(text=create_analytics_panel(), sizing_mode="stretch_width")
     header_div = create_header()
 
