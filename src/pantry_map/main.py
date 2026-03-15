@@ -60,7 +60,7 @@ def _selected_labels(checkbox_group):
 # 3. Callbacks
 def update():
     """Update the side panel listing based on filters."""
-    labels = resource_type_selector.labels
+    labels = list(resource_type_selector.labels)
     active = resource_type_selector.active
     if active is None:
         if "Both" in labels:
@@ -70,7 +70,7 @@ def update():
         else:
             resource_type = None
     else:
-        resource_type = labels[active]
+        resource_type = labels[int(active)]
     open_only = bool(open_only_toggle.active)
     selected_eligibility = _selected_labels(eligibility_group)
     selected_days = _selected_labels(day_group)
