@@ -148,7 +148,7 @@ class TestCalculateRoute(unittest.TestCase):
         self.assertIsNone(route)
 
     def test_no_transit_route(self):
-        """Should return None if route is found"""
+        """Should return None if no route is found"""
         self.routeCalculater.set_user_location((47.59, -122.33))
         est_time, route = self.routeCalculater.get_route_to_destination("foodbank4")
         self.assertIsNone(est_time)
