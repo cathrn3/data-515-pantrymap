@@ -50,7 +50,7 @@ class calculateRoute:
 
     def set_user_location(self, user_location: tuple | None):
         self.user_location = user_location # lat, lon coordinates
-        if user_location != None:
+        if user_location is not None:
             self._add_user_location_to_graph()
     
     def get_user_location(self):
@@ -106,7 +106,7 @@ class calculateRoute:
     def get_route_to_destination(self, food_bank_id: str):
         """Return the shortest path between the user and the given food bank. Return estimated time as well."""
         try:
-            if self.user_location == None:
+            if self.user_location is None:
                 return None, None
             new_graph = self._get_nearby_nodes_to_food_bank(food_bank_id)
             time, route = nx.single_source_dijkstra(new_graph, 'USER', food_bank_id, weight='weight')
