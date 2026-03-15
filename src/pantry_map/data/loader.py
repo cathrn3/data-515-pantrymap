@@ -5,7 +5,7 @@ from pantry_map.config import BASE_DIR
 def get_shapes_df():
     data_path = os.path.join(BASE_DIR, "pantry_map", "data", "raw", "all_shapes_labeled.csv")
     transit_df = pd.read_csv(data_path)
-    grouped_df = transit_df.groupby("route_id").agg({"x": list, "y": list, "color": "first"}).reset_index()
+    grouped_df = transit_df.groupby(["route_id", "direction_id"]).agg({"x": list, "y": list, "color": "first"}).reset_index()
     return transit_df, grouped_df
 
 def get_foodbank_df():
