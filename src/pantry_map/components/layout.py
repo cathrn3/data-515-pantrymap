@@ -89,7 +89,7 @@ def create_nearby_panel():
         location_list,
         results_div,
         sizing_mode="fixed",
-        sizing_mode="fixed"
+    )
 
     return panel, {"location_list": location_list}
 
