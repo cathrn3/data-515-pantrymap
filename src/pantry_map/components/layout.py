@@ -143,7 +143,6 @@ def format_nearby_foodbanks(foodbank_data):
         )
 
     return "<div style='max-height:640px; overflow-y:auto; padding-right:6px;'>" + "".join(cards) + "</div>"
-    """
 
 def create_header():
     header_div = Div(text=f"""
