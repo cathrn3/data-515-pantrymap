@@ -9,8 +9,9 @@ for formatting food bank information in HTML.
 from datetime import datetime
 import pandas as pd
 from bokeh.layouts import column, row
-from bokeh.models import Div, TextInput, Button, Slider, CheckboxGroup, RadioButtonGroup
+from bokeh.models import Div, TextInput, Button, Slider, CheckboxGroup, RadioButtonGroup, LayoutDOM
 from pantry_map.utilities.constants import COLORS
+import html
 
 def is_open_today(hours_str):
     """
@@ -70,6 +71,13 @@ def format_foodbank_list(df):
             if show_distance else ""
         )
 
+        # Escape dataset-derived text fields before inserting into HTML
+        agency = html.escape(str(row_data['Agency']), quote=True)
+        location = html.escape(str(row_data['Location']), quote=True)
+        address = html.escape(str(row_data['Address']), quote=True)
+        phone_display = html.escape(str(phone), quote=True)
+        resource_type = html.escape(str(row_data['Food Resource Type']), quote=True)
+
         # Detection
         is_open = is_open_today(row_data.get('Days/Hours', ''))
         if is_open is True:
@@ -89,20 +97,20 @@ def format_foodbank_list(df):
             <div style='display: flex; justify-content: space-between; align-items: start;
             margin-bottom: 8px;'>
                 <h3 style='margin: 0; font-size: 16px; color: #24292e; line-height: 1.3;'>
-                    {row_data['Agency']}
+                    {agency}
                 </h3>
                 {status_badge}
             </div>
             <div style='font-size: 13px; color: #586069;'>
-                <p style='margin: 4px 0;'>{row_data['Location']}</p>
-                <p style='margin: 2px 0;'>{row_data['Address']}</p>
-                <p style='margin: 2px 0;'>{phone}</p>
+                <p style='margin: 4px 0;'>{location}</p>
+                <p style='margin: 2px 0;'>{address}</p>
+                <p style='margin: 2px 0;'>{phone_display}</p>
             </div>
             {dist_html}
             <div style='margin-top: 12px; padding-top: 10px; border-top: 1px solid #f6f8fa;'>
                 <span style='background: #f1f8ff; color: #0366d6; padding: 3px 8px;
                 border-radius: 12px; font-size: 10px; font-weight: 600;'>
-                    {row_data['Food Resource Type']}
+                    {resource_type}
                 </span>
             </div>
         </div>
@@ -277,7 +285,7 @@ def create_header():
         """, sizing_mode="stretch_width")
     return header_div
 
-def create_layout(fig, sidebar):
+def create_layout(fig: LayoutDOM, sidebar: LayoutDOM) -> LayoutDOM:
     """
     Assemble the final application layout.
 
