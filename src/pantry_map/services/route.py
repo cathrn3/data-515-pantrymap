@@ -31,7 +31,9 @@ class calculateRoute:
         self.transfers_df = transfers_df
         self.graph = self._initialize_graph()
 
-        self.transit_coords = np.radians(self.transit_df[['stop_lat','stop_lon']].dropna())
+        # Use a filtered transit DataFrame for spatial queries so BallTree indices align
+        self.transit_df_nonnull = self.transit_df.dropna(subset=['stop_lat', 'stop_lon']).reset_index(drop=True)
+        self.transit_coords = np.radians(self.transit_df_nonnull[['stop_lat', 'stop_lon']])
         self.transit_tree = BallTree(self.transit_coords, metric='haversine')
 
         self.food_bank_coords = np.radians(self.food_bank_df[['Latitude','Longitude']].dropna())
@@ -99,7 +101,8 @@ class calculateRoute:
         new_graph = self.graph.copy() # Safely copies graph for adding temp edges
         for df_index, dist in zip(transit_idx, transit_dist):
             estimated_time = (dist / self.WALKING_SPEED) * 60
-            stop_id = self.transit_df['unique_key'].iloc[df_index]
+            # Map BallTree indices back to the filtered transit_df_nonnull to avoid misalignment
+            stop_id = self.transit_df_nonnull['unique_key'].iloc[df_index]
             new_graph.add_edge(food_bank_id, stop_id, weight=estimated_time)
             new_graph.add_edge(stop_id, food_bank_id, weight=estimated_time)
         return new_graph
