@@ -2,9 +2,15 @@ from bokeh.io import curdoc
 from bokeh.models import ColumnDataSource, CDSView, BooleanFilter
 from pantry_map.data.loader import get_foodbank_df, get_transit_df
 from pantry_map.components.map import add_markers, add_routes, create_map
-from pantry_map.components.layout import create_sidebar, create_layout
+from pantry_map.components.layout import (
+    create_filter_bar,
+    create_nearby_panel,
+    create_layout,
+    format_nearby_foodbanks,
+)
 from pantry_map.filters.mask import get_foodbank_mask
 from pantry_map.utilities.utility import (
+    calculate_distance,
     validate_address,
     geocode_address,
 )
@@ -17,22 +23,21 @@ foodbank_initial_mask = [True] * len(foodbank_df)
 foodbank_source = ColumnDataSource(foodbank_df)
 foodbank_view = CDSView(filter=BooleanFilter(foodbank_initial_mask))
 
-x_min, x_max = foodbank_df['x'].min(), foodbank_df['x'].max()
-y_min, y_max = foodbank_df['y'].min(), foodbank_df['y'].max()
-
-map_fig = create_map(x_min, x_max, y_min, y_max)
+map_fig = create_map(foodbank_df)
 add_routes(map_fig, transit_source)
 add_markers(map_fig, foodbank_source, view=foodbank_view)
 
-sidebar_layout, sidebar_widgets = create_sidebar(foodbank_df)
-resource_type_selector = sidebar_widgets['resource_type_selector']
-distance_slider = sidebar_widgets['distance_slider']
-open_only_toggle = sidebar_widgets['open_only_toggle']
-eligibility_group = sidebar_widgets['eligibility_group']
-day_group = sidebar_widgets['day_group']
-address_input = sidebar_widgets['address_input']
-search_button = sidebar_widgets['search_button']
-clear_button = sidebar_widgets['clear_button']
+filter_bar, filter_widgets = create_filter_bar()
+nearby_panel, nearby_widgets = create_nearby_panel()
+
+resource_type_selector = filter_widgets['resource_type_selector']
+distance_slider = filter_widgets['distance_slider']
+open_only_toggle = filter_widgets['open_only_toggle']
+eligibility_group = filter_widgets['eligibility_group']
+day_group = filter_widgets['day_group']
+address_input = filter_widgets['address_input']
+search_button = filter_widgets['search_button']
+clear_button = filter_widgets['clear_button']
 
 user_location = {"lat": None, "lon": None}
 
@@ -70,6 +75,24 @@ def update():
     )
     foodbank_view.filter = BooleanFilter(foodbank_mask.tolist())
 
+    filtered_df = foodbank_df[foodbank_mask].copy()
+
+    if user_location["lat"] is not None and user_location["lon"] is not None and not filtered_df.empty:
+        filtered_df["distance"] = filtered_df.apply(
+            lambda row: calculate_distance(
+                user_location["lat"],
+                user_location["lon"],
+                row["Latitude"],
+                row["Longitude"],
+            ),
+            axis=1,
+        )
+        filtered_df = filtered_df.sort_values("distance")
+    else:
+        filtered_df = filtered_df.sort_values("Agency")
+
+    nearby_widgets["location_list"].text = format_nearby_foodbanks(filtered_df)
+
 # Search button callback
 def on_search_click():
     """
@@ -86,22 +109,22 @@ def on_search_click():
     is_valid, msg, normalized_address = validate_address(address)
 
     if not is_valid:
-        sidebar_widgets["results_div"].text = f"<p style='color:red'>{msg}</p>"
+        filter_widgets["results_div"].text = f"<p style='color:red'>{msg}</p>"
         return
 
-    sidebar_widgets["results_div"].text = ""
+    filter_widgets["results_div"].text = ""
 
     # get lat and lon
     lat, lon = geocode_address(normalized_address)
     if lat is None or lon is None:
-        sidebar_widgets["results_div"].text = "<p style='color:red'>Could not find this address. Please try again.</p>"
+        filter_widgets["results_div"].text = "<p style='color:red'>Could not find this address. Please try again.</p>"
         return
 
     user_location["lat"] = lat
     user_location["lon"] = lon
 
     update()
-    sidebar_widgets["results_div"].text = "<p style='color:green'>Address validated. Results updated.</p>"
+    filter_widgets["results_div"].text = "<p style='color:green'>Address validated. Results updated.</p>"
 
 
 def on_address_change(attr, old, new):
@@ -110,7 +133,8 @@ def on_address_change(attr, old, new):
     # subsequent filter updates do not use a stale location.
     user_location["lat"] = None
     user_location["lon"] = None
-    sidebar_widgets["results_div"].text = ""
+    filter_widgets["results_div"].text = ""
+    update()
 
 def on_clear_click():
     """Handle click event for clear.
@@ -128,7 +152,7 @@ def on_clear_click():
     address_input.value = ""
 
     # Clear results message
-    sidebar_widgets["results_div"].text = ""
+    filter_widgets["results_div"].text = ""
 
 resource_type_selector.on_change("active", lambda attr, old, new: update())
 distance_slider.on_change("value", lambda attr, old, new: update())
@@ -139,10 +163,9 @@ address_input.on_change("value", on_address_change)
 search_button.on_click(on_search_click)
 clear_button.on_click(on_clear_click)
 
-layout = create_layout(
-    map_fig,
-    sidebar_layout
-)
+update()
+
+layout = create_layout(map_fig, filter_bar, nearby_panel)
 
 curdoc().add_root(layout)
 curdoc().title = "PantryMap"
