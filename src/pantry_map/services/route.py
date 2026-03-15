@@ -6,6 +6,7 @@ and a food bank via public transportation
 import networkx as nx
 import numpy as np
 from sklearn.neighbors import BallTree
+import logging
 
 
 class calculateRoute:
@@ -113,6 +114,9 @@ class calculateRoute:
             return time, route
         except (nx.NetworkXNoPath, nx.NodeNotFound):
             return None, None
-        except Exception as e:
-            print("Unexpected error occurred while finding route") # Log unexpected errors
+        except Exception:
+            logging.exception(
+                "Unexpected error occurred while finding route to food bank %s",
+                food_bank_id,
+            )
             return None, None
