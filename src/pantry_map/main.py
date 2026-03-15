@@ -4,7 +4,10 @@ from pantry_map.data.loader import get_foodbank_df, get_transit_df
 from pantry_map.components.map import add_markers, add_routes, create_map
 from pantry_map.components.layout import create_sidebar, create_layout
 from pantry_map.filters.mask import get_foodbank_mask
-from pantry_map.utilities.utility import validate_address, geocode_address, find_nearest_foodbanks
+from pantry_map.utilities.utility import (
+    validate_address,
+    geocode_address,
+)
 
 transit_df = get_transit_df()
 transit_source = ColumnDataSource(transit_df)
@@ -22,14 +25,49 @@ add_routes(map_fig, transit_source)
 add_markers(map_fig, foodbank_source, view=foodbank_view)
 
 sidebar_layout, sidebar_widgets = create_sidebar(foodbank_df)
-resource_types = sidebar_widgets['resource_type_dropdown']
+resource_type_selector = sidebar_widgets['resource_type_selector']
+distance_slider = sidebar_widgets['distance_slider']
+open_only_toggle = sidebar_widgets['open_only_toggle']
+eligibility_group = sidebar_widgets['eligibility_group']
+day_group = sidebar_widgets['day_group']
 address_input = sidebar_widgets['address_input']
 search_button = sidebar_widgets['search_button']
 clear_button = sidebar_widgets['clear_button']
 
+user_location = {"lat": None, "lon": None}
+
+
+def _selected_labels(checkbox_group):
+    return [checkbox_group.labels[idx] for idx in checkbox_group.active]
+
+
 def update():
-    # Update the displayed view instead of modifying the underlying data
-    foodbank_mask = get_foodbank_mask(foodbank_df, resource_types)
+    labels = resource_type_selector.labels
+    active = resource_type_selector.active
+    if active is None:
+        # Treat None as "Both" if available, otherwise fall back to the first label
+        if "Both" in labels:
+            resource_type = "Both"
+        elif labels:
+            resource_type = labels[0]
+        else:
+            resource_type = None
+    else:
+        resource_type = labels[active]
+    open_only = 0 in open_only_toggle.active
+    selected_eligibility = _selected_labels(eligibility_group)
+    selected_days = _selected_labels(day_group)
+
+    foodbank_mask = get_foodbank_mask(
+        foodbank_df,
+        resource_type=resource_type,
+        open_only=open_only,
+        selected_eligibility=selected_eligibility,
+        selected_days=selected_days,
+        user_lat=user_location["lat"],
+        user_lon=user_location["lon"],
+        max_distance_miles=distance_slider.value,
+    )
     foodbank_view.filter = BooleanFilter(foodbank_mask.tolist())
 
 # Search button callback
@@ -45,24 +83,34 @@ def on_search_click():
 
     # validate address input
     address = address_input.value
-    is_valid, msg = validate_address(address)
+    is_valid, msg, normalized_address = validate_address(address)
 
     if not is_valid:
         sidebar_widgets["results_div"].text = f"<p style='color:red'>{msg}</p>"
         return
-    
+
+    sidebar_widgets["results_div"].text = ""
+
     # get lat and lon
-    lat, lon = geocode_address(address)
+    lat, lon = geocode_address(normalized_address)
     if lat is None or lon is None:
         sidebar_widgets["results_div"].text = "<p style='color:red'>Could not find this address. Please try again.</p>"
         return
-    
-    # calc nearest foodbanks
-    nearest_df = find_nearest_foodbanks(foodbank_df, lat, lon, k=5)
-    
-    # highlight nearest markers on the map
-    nearest_mask = foodbank_df.index.isin(nearest_df.index)
-    foodbank_view.filter = BooleanFilter(nearest_mask.tolist())
+
+    user_location["lat"] = lat
+    user_location["lon"] = lon
+
+    update()
+    sidebar_widgets["results_div"].text = "<p style='color:green'>Address validated. Results updated.</p>"
+
+
+def on_address_change(attr, old, new):
+    del attr, old, new
+    # Clear stored user location when the address text changes so that
+    # subsequent filter updates do not use a stale location.
+    user_location["lat"] = None
+    user_location["lon"] = None
+    sidebar_widgets["results_div"].text = ""
 
 def on_clear_click():
     """Handle click event for clear.
@@ -72,8 +120,9 @@ def on_clear_click():
     """
 
     # Reset map markers to show all foodbanks
-    reset_mask = [True] * len(foodbank_df)
-    foodbank_view.filter = BooleanFilter(reset_mask)
+    user_location["lat"] = None
+    user_location["lon"] = None
+    update()
 
     # Clear the address input box
     address_input.value = ""
@@ -81,7 +130,12 @@ def on_clear_click():
     # Clear results message
     sidebar_widgets["results_div"].text = ""
 
-resource_types.on_change("value", lambda attr, old, new: update())
+resource_type_selector.on_change("active", lambda attr, old, new: update())
+distance_slider.on_change("value", lambda attr, old, new: update())
+open_only_toggle.on_change("active", lambda attr, old, new: update())
+eligibility_group.on_change("active", lambda attr, old, new: update())
+day_group.on_change("active", lambda attr, old, new: update())
+address_input.on_change("value", on_address_change)
 search_button.on_click(on_search_click)
 clear_button.on_click(on_clear_click)
 

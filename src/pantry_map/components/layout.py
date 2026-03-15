@@ -1,25 +1,32 @@
 from bokeh.layouts import column, row
-from bokeh.models import MultiSelect, Div, TextInput, Button
+from bokeh.models import Div, TextInput, Button, Slider, CheckboxGroup, RadioButtonGroup
 from pantry_map.utilities.constants import COLORS
 
 def create_sidebar(foodbank_df):
-    # Dropdown filter
-    options = list(foodbank_df["Food Resource Type"].unique())
-    resource_type_dropdown = MultiSelect(
-        value=options,
-        options=options
+    resource_type_selector = RadioButtonGroup(
+        labels=["Both", "Food Bank", "Meal"],
+        active=0,
+        width=360,
+    )
+
+    distance_slider = Slider(title="Distance (miles)", start=1, end=25, value=10, step=1, width=360)
+    open_only_toggle = CheckboxGroup(labels=["Open locations only"], active=[])
+    eligibility_group = CheckboxGroup(
+        labels=["General Public", "Seniors", "Youth"],
+        active=[],
+    )
+    day_group = CheckboxGroup(
+        labels=["Monday", "Tuesday", "Wednesday", "Thursday", "Friday", "Saturday", "Sunday"],
+        active=[],
     )
 
     # Text input and search button for address input
     address_input = TextInput(value="", title="Enter your address:")
     search_button = Button(label="Search", button_type="primary")
-    clear_button = Button(label="Clear", button_type="light")
-
-    # TODO: Fill out sidebar
+    clear_button = Button(label="Clear", button_type="default")
 
     # Placeholder for results / location list
     results_div = Div(text="", width=360)
-    location_list = Div(text="", width=360)
 
     sidebar_layout = column(
         Div(
@@ -35,24 +42,34 @@ def create_sidebar(foodbank_df):
                 Search & Filters
             </div>"""
         ),
-        resource_type_dropdown,
+        Div(text="<div style='font-size:12px; font-weight:600; margin: 4px 0;'>Food resource type</div>"),
+        resource_type_selector,
+        Div(text="<div style='font-size:12px; font-weight:600; margin: 8px 0 2px;'>Distance from address</div>"),
+        distance_slider,
+        Div(text="<div style='font-size:12px; font-weight:600; margin: 8px 0 2px;'>Operational status</div>"),
+        open_only_toggle,
+        Div(text="<div style='font-size:12px; font-weight:600; margin: 8px 0 2px;'>Eligibility</div>"),
+        eligibility_group,
+        Div(text="<div style='font-size:12px; font-weight:600; margin: 8px 0 2px;'>Available days</div>"),
+        day_group,
         address_input,
-        search_button,
-        clear_button,
+        row(search_button, clear_button, width=360),
         results_div,
-        location_list,
         width=380,
         sizing_mode="fixed"
     )
 
     # Return both the layout and the widgets for callbacks
     return sidebar_layout, {
-        "resource_type_dropdown": resource_type_dropdown,
+        "resource_type_selector": resource_type_selector,
+        "distance_slider": distance_slider,
+        "open_only_toggle": open_only_toggle,
+        "eligibility_group": eligibility_group,
+        "day_group": day_group,
         "address_input": address_input,
         "search_button": search_button,
         "clear_button": clear_button,
         "results_div": results_div,
-        "location_list": location_list,
     }
 
 def create_analytics_panel():
