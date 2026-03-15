@@ -84,6 +84,11 @@ def create_nearby_panel():
         width=360,
     )
 
+    results_div = Div(
+        text="",
+        width=360,
+    )
+
     panel = column(
         Div(text="<div style='font-size:12px; font-weight:700; letter-spacing:0.5px; color:#57606a; margin:8px 0 10px;'>NEARBY FOOD BANKS</div>"),
         location_list,
@@ -91,7 +96,7 @@ def create_nearby_panel():
         sizing_mode="fixed",
     )
 
-    return panel, {"location_list": location_list}
+    return panel, {"location_list": location_list, "results_div": results_div}
 
 
 def format_nearby_foodbanks(foodbank_data):
