@@ -13,11 +13,11 @@ def create_sidebar(foodbank_df):
     open_only_toggle = CheckboxGroup(labels=["Open locations only"], active=[])
     eligibility_group = CheckboxGroup(
         labels=["General Public", "Seniors", "Youth"],
-        active=[0, 1, 2],
+        active=[],
     )
     day_group = CheckboxGroup(
         labels=["Monday", "Tuesday", "Wednesday", "Thursday", "Friday", "Saturday", "Sunday"],
-        active=[0, 1, 2, 3, 4, 5, 6],
+        active=[],
     )
 
     # Text input and search button for address input
