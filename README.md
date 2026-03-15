@@ -2,6 +2,10 @@
 
 # PantryMap: Accessible Food Bank Locator
 
+[![.github/workflows/build_test.yml](https://github.com/cathrn3/data-515-pantrymap/actions/workflows/build_test.yml/badge.svg)](https://github.com/cathrn3/data-515-pantrymap/actions/workflows/build_test.yml)
+[![Coverage Status](https://coveralls.io/repos/github/cathrn3/data-515-pantrymap/badge.svg?branch=main)](https://coveralls.io/github/cathrn3/data-515-pantrymap?branch=main)
+
+
 ## Project Title
 **PantryMap: Accessible Food Bank Locator**
 
