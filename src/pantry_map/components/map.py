@@ -7,6 +7,16 @@ layers like markers and routes to the map.
 
 from bokeh.plotting import figure
 
+
+def create_map(foodbank_df):
+    x_q_low = foodbank_df['x'].quantile(0.02)
+    x_q_high = foodbank_df['x'].quantile(0.98)
+    y_q_low = foodbank_df['y'].quantile(0.02)
+    y_q_high = foodbank_df['y'].quantile(0.98)
+
+    x_padding = (x_q_high - x_q_low) * 0.10
+    y_padding = (y_q_high - y_q_low) * 0.10
+
 def create_map(x_min, x_max, y_min, y_max):
     """
     Create a Bokeh figure with a Mercator tile background.
@@ -22,10 +32,11 @@ def create_map(x_min, x_max, y_min, y_max):
     """
     x_padding = (x_max - x_min) * 0.15
     y_padding = (y_max - y_min) * 0.15
+main
 
     fig = figure(
-        x_range=(x_min - x_padding, x_max + x_padding),
-        y_range=(y_min - y_padding, y_max + y_padding),
+        x_range=(x_q_low - x_padding, x_q_high + x_padding),
+        y_range=(y_q_low - y_padding, y_q_high + y_padding),
         x_axis_type="mercator",
         y_axis_type="mercator",
         width=1000,

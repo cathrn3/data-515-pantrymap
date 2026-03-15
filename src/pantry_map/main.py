@@ -14,15 +14,28 @@ sys.path.append(os.path.join(PROJECT_ROOT, "src"))
 
 # pylint: disable=wrong-import-position
 from bokeh.io import curdoc
+
+from bokeh.models import ColumnDataSource, CDSView, BooleanFilter
+from pantry_map.data.loader import get_foodbank_df, get_transit_df
+from pantry_map.components.map import add_markers, add_routes, create_map
+from pantry_map.components.layout import (
+    create_filter_bar,
+    create_nearby_panel,
+    create_layout,
+    format_nearby_foodbanks,
+)
+
 from bokeh.models import ColumnDataSource, CDSView, BooleanFilter, TapTool
 from pantry_map.data.loader import get_foodbank_df, get_shapes_df, get_transit_df, get_transfers_df
 from pantry_map.components.map import (
     add_markers, add_routes, create_map, update_route, clear_routes
 )
 from pantry_map.components.layout import create_sidebar, create_layout, format_foodbank_list
+main
 from pantry_map.filters.mask import get_foodbank_mask
 from pantry_map.services.route import CalculateRoute
 from pantry_map.utilities.utility import (
+    calculate_distance,
     validate_address,
     geocode_address,
     lat_lon_to_mercator,
@@ -40,6 +53,21 @@ foodbank_initial_mask = [True] * len(foodbank_df)
 foodbank_source = ColumnDataSource(foodbank_df)
 foodbank_view = CDSView(filter=BooleanFilter(foodbank_initial_mask))
 
+map_fig = create_map(foodbank_df)
+add_routes(map_fig, transit_source)
+add_markers(map_fig, foodbank_source, view=foodbank_view)
+
+filter_bar, filter_widgets = create_filter_bar()
+nearby_panel, nearby_widgets = create_nearby_panel()
+
+resource_type_selector = filter_widgets['resource_type_selector']
+distance_slider = filter_widgets['distance_slider']
+open_only_toggle = filter_widgets['open_only_toggle']
+eligibility_group = filter_widgets['eligibility_group']
+day_group = filter_widgets['day_group']
+address_input = filter_widgets['address_input']
+search_button = filter_widgets['search_button']
+clear_button = filter_widgets['clear_button']
 # Initialize drawn sources
 user_source = ColumnDataSource({"x": [], "y": []})
 foodbank_highlight_source = ColumnDataSource({"x": [], "y": []})
@@ -76,6 +104,7 @@ search_button = sidebar_widgets['search_button']
 clear_button = sidebar_widgets['clear_button']
 location_list = sidebar_widgets['location_list']
 results_div = sidebar_widgets['results_div']
+main
 
 user_location = {"lat": None, "lon": None}
 
@@ -101,16 +130,58 @@ def update():
     selected_eligibility = _selected_labels(eligibility_group)
     selected_days = _selected_labels(day_group)
 
+    # First, apply non-distance-based filters.
+    # We intentionally do not pass user_lat/user_lon/max_distance_miles here
+    # so that distance is not recomputed inside get_foodbank_mask.
     foodbank_mask = get_foodbank_mask(
         foodbank_df,
         resource_type=resource_type,
         open_only=open_only,
         selected_eligibility=selected_eligibility,
         selected_days=selected_days,
-        user_lat=user_location["lat"],
-        user_lon=user_location["lon"],
-        max_distance_miles=distance_slider.value,
+        user_lat=None,
+        user_lon=None,
+        max_distance_miles=None,
     )
+
+    # Optionally refine by distance from the user, computing distances once.
+    distances = None
+    if (
+        user_location["lat"] is not None
+        and user_location["lon"] is not None
+        and not foodbank_df.empty
+    ):
+        # Compute distance for all rows once.
+        distances = foodbank_df.apply(
+            lambda row: calculate_distance(
+                user_location["lat"],
+                user_location["lon"],
+                row["Latitude"],
+                row["Longitude"],
+            ),
+            axis=1,
+        )
+        # Apply distance threshold from the slider.
+        distance_mask = distances <= distance_slider.value
+        combined_mask = foodbank_mask & distance_mask
+    else:
+        combined_mask = foodbank_mask
+
+    foodbank_view.filter = BooleanFilter(combined_mask.tolist())
+
+    filtered_df = foodbank_df[combined_mask].copy()
+
+    if (
+        distances is not None
+        and not filtered_df.empty
+    ):
+        # Attach precomputed distances for the filtered rows and sort by distance.
+        filtered_df["distance"] = distances[combined_mask]
+        filtered_df = filtered_df.sort_values("distance")
+    else:
+        filtered_df = filtered_df.sort_values("Agency")
+
+    nearby_widgets["location_list"].text = format_nearby_foodbanks(filtered_df)
     foodbank_view.filter = BooleanFilter(foodbank_mask.tolist())
     location_list.text = format_foodbank_list(foodbank_df[foodbank_mask].head(20))
 
@@ -119,6 +190,7 @@ def update():
     if selected and not foodbank_mask[selected[0]]:
         clear_routes(foodbank_highlight_source, foodbank_source, route_source)
 
+main
 
 def on_search_click():
     """Handle click event for the search button.
@@ -132,14 +204,22 @@ def on_search_click():
     is_valid, msg, validated_address = validate_address(address)
 
     if not is_valid:
+
+        filter_widgets["results_div"].text = f"<p style='color:red'>{msg}</p>"
+
         results_div.text = f"<p style='color:red'>{msg}</p>"
+main
         return
 
-    sidebar_widgets["results_div"].text = ""
+    filter_widgets["results_div"].text = ""
 
     lat, lon = geocode_address(validated_address)
     if lat is None or lon is None:
+
+        filter_widgets["results_div"].text = "<p style='color:red'>Could not find this address. Please try again.</p>"
+
         results_div.text = "<p style='color:red'>Could not find this address. Please try again.</p>"
+ main
         return
 
     clear_routes(foodbank_highlight_source, foodbank_source, route_source)
@@ -154,9 +234,13 @@ def on_search_click():
     route_planner.set_user_location((lat, lon))
     update()
 
+    filter_widgets["results_div"].text = "<p style='color:green'>Address validated. Results updated.</p>"
+
+
     sidebar_widgets["results_div"].text = (
         "<p style='color:green'>Address validated. Results updated.</p>"
     )
+main
 
 
 def on_address_change(attr, old, new):
@@ -166,7 +250,7 @@ def on_address_change(attr, old, new):
     # subsequent filter updates do not use a stale location.
     user_location["lat"] = None
     user_location["lon"] = None
-    sidebar_widgets["results_div"].text = ""
+    filter_widgets["results_div"].text = ""
 
 
 def on_clear_click():
@@ -185,7 +269,7 @@ def on_clear_click():
     update()
 
     # Clear results message
-    sidebar_widgets["results_div"].text = ""
+    filter_widgets["results_div"].text = ""
 
     # Clear rendered routes from user to food bank
     route_planner.set_user_location(None)
@@ -232,8 +316,13 @@ search_button.on_click(on_search_click)
 clear_button.on_click(on_clear_click)
 foodbank_source.selected.on_change("indices", marker_callback)  # pylint: disable=no-member
 
+update()
+
+layout = create_layout(map_fig, filter_bar, nearby_panel)
+
 # Initial population
 update()
+ main
 
 # 5. Assemble Layout
 layout = create_layout(map_fig, sidebar_layout)

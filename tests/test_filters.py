@@ -64,9 +64,14 @@ class TestFoodbankFilters(unittest.TestCase):
             open_only=True,
             selected_eligibility=[],
             selected_days=[],
+
+            current_day="Sunday",
+        )
+        self.assertEqual(mask.tolist(), [False, False, True, False])
+
             current_day="Monday",
         )
-        self.assertEqual(mask.tolist(), [True, False, False, False])
+ main
 
     def test_distance_filter_with_user_location(self):
         # Roughly near row 0/1/2, far from row 3

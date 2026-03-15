@@ -1,11 +1,3 @@
-"""
-Layout components for the PantryMap Bokeh application.
-
-This module provides functions to create the sidebar, header, analytics panel,
-and the main layout of the application. It also includes helper functions
-for formatting food bank information in HTML.
-"""
-
 import html
 from datetime import datetime
 import pandas as pd
@@ -13,6 +5,14 @@ from bokeh.layouts import column, row
 from bokeh.models import Div, TextInput, Button, Slider, CheckboxGroup, RadioButtonGroup, LayoutDOM
 from pantry_map.utilities.constants import COLORS
 
+
+
+def _label(text):
+    return Div(text=f"<div style='font-size:12px; font-weight:600; margin: 0 0 6px;'>{text}</div>")
+
+
+def create_filter_bar():
+  
 def is_open_today(hours_str):
     """
     Check if today's day is mentioned in the hours string.
@@ -128,13 +128,14 @@ def create_sidebar():
     Returns:
         tuple: (sidebar_layout, dict_of_widgets)
     """
+main
     resource_type_selector = RadioButtonGroup(
         labels=["Both", "Food Bank", "Meal"],
         active=0,
-        width=360,
+        width=260,
     )
 
-    distance_slider = Slider(title="Distance (miles)", start=1, end=25, value=10, step=1, width=360)
+    distance_slider = Slider(title="Distance (miles)", start=1, end=25, value=10, step=1, width=260)
     open_only_toggle = CheckboxGroup(labels=["Open locations only"], active=[])
     eligibility_group = CheckboxGroup(
         labels=["General Public", "Seniors", "Youth"],
@@ -146,9 +147,10 @@ def create_sidebar():
     )
 
     # Text input and search button for address input
-    address_input = TextInput(value="", title="Enter your address:")
+    address_input = TextInput(value="", title="Address", width=350)
     search_button = Button(label="Search", button_type="primary")
     clear_button = Button(label="Clear", button_type="default")
+
 
     # Placeholder for results / location list
     results_div = Div(text="", width=360)
@@ -157,16 +159,47 @@ def create_sidebar():
         sizing_mode="stretch_width",
         height=500,
         styles={"overflow-y": "auto"})
+main
 
-    sidebar_layout = column(
+    toolbar = column(
         Div(
             text="""
+
+            <div style=
+                'padding: 8px 0 10px;
+                font-size: 11px;
+                font-weight: 700;
+                text-transform: uppercase;
+                color: #57606a;
+                letter-spacing: 0.5px;
+          
             <div style='padding: 5px 0; font-size: 12px; font-weight: 700; text-transform: uppercase;
             color: #57606a; letter-spacing: 0.5px;'>
+ main
                 Search & Filters
             </div>""",
             sizing_mode="stretch_width"
         ),
+
+        row(
+            column(_label("Resource type"), resource_type_selector, width=280),
+            column(_label("Operational status"), open_only_toggle, width=190),
+            column(distance_slider, width=280),
+            column(address_input, row(search_button, clear_button), width=390),
+            sizing_mode="stretch_width",
+        ),
+        row(
+            column(_label("Eligibility"), eligibility_group, width=380),
+            column(_label("Available days"), day_group, width=600),
+            results_div,
+            sizing_mode="stretch_width",
+        ),
+        width=1400,
+        sizing_mode="stretch_width",
+    )
+
+    return toolbar, {
+
         Div(text="<div style='font-size:12px; font-weight:600; margin: 4px 0;'>"
             "Food resource type</div>"),
         resource_type_selector,
@@ -200,6 +233,7 @@ def create_sidebar():
     )
 
     return sidebar_layout, {
+
         "resource_type_selector": resource_type_selector,
         "distance_slider": distance_slider,
         "open_only_toggle": open_only_toggle,
@@ -212,6 +246,76 @@ def create_sidebar():
         "location_list": location_list,
     }
 
+def create_nearby_panel():
+    location_list = Div(
+        text="<div style='padding:12px; color:#6a737d;'>Apply filters or search an address to view nearby food banks.</div>",
+        width=360,
+    )
+
+    results_div = Div(
+        text="",
+        width=360,
+    )
+
+    panel = column(
+        Div(text="<div style='font-size:12px; font-weight:700; letter-spacing:0.5px; color:#57606a; margin:8px 0 10px;'>NEARBY FOOD BANKS</div>"),
+        location_list,
+        results_div,
+        sizing_mode="fixed",
+    )
+
+    return panel, {"location_list": location_list, "results_div": results_div}
+
+
+def format_nearby_foodbanks(foodbank_data):
+    if foodbank_data is None or foodbank_data.empty:
+        return "<div style='padding:12px; color:#6a737d;'>No matching food banks found.</div>"
+
+    cards = []
+    show_distance = "distance" in foodbank_data.columns
+
+    for _, row_data in foodbank_data.head(12).iterrows():
+        agency = html.escape(str(row_data.get("Agency", "Unknown")), quote=True)
+        location = html.escape(str(row_data.get("Location", "")), quote=True)
+        address = html.escape(str(row_data.get("Address", "")), quote=True)
+        phone = row_data.get("Phone Number")
+        phone_display = html.escape(str(phone), quote=True) if phone else "Not available"
+        resource_type = html.escape(str(row_data.get("Food Resource Type", "")), quote=True)
+
+        status = str(row_data.get("Operational Status", "")).strip().lower()
+        if status == "open":
+            status_badge = "<span style='background:#dafbe1; color:#1a7f37; padding:2px 7px; border-radius:4px; font-size:10px; font-weight:700;'>OPEN</span>"
+        else:
+            status_badge = "<span style='background:#ffebe9; color:#cf222e; padding:2px 7px; border-radius:4px; font-size:10px; font-weight:700;'>CLOSED</span>"
+
+        distance_html = ""
+        if show_distance:
+            distance_html = (
+                f"<div style='margin-top:8px; font-size:12px; color:#6a737d; font-weight:600;'>"
+                f"{row_data['distance']} miles away</div>"
+            )
+
+        cards.append(
+            f"""
+            <div style='padding:14px; border:1px solid #e1e4e8; border-radius:8px; margin-bottom:10px; background:white;'>
+                <div style='display:flex; justify-content:space-between; gap:10px; margin-bottom:6px;'>
+                    <div style='font-size:16px; font-weight:700; color:#24292f; line-height:1.3;'>{agency}</div>
+                    {status_badge}
+                </div>
+                <div style='font-size:13px; color:#57606a;'>
+                    <div>{location}</div>
+                    <div style='margin-top:2px;'>{address}</div>
+                    <div style='margin-top:2px;'>{phone_display}</div>
+                    {distance_html}
+                </div>
+                <div style='margin-top:10px; padding-top:8px; border-top:1px solid #f0f2f4;'>
+                    <span style='background:#f1f8ff; color:#0969da; padding:3px 8px; border-radius:12px; font-size:10px; font-weight:700;'>{resource_type}</span>
+                </div>
+            </div>
+            """
+        )
+
+    return "<div style='max-height:640px; overflow-y:auto; padding-right:6px;'>" + "".join(cards) + "</div>"
 def create_analytics_panel():
     """
     Create the HTML for the analytics panel.
@@ -259,6 +363,7 @@ def create_analytics_panel():
     </div>
     """
 
+
 def create_header():
     """
     Create the header component with a Div.
@@ -298,6 +403,11 @@ def create_layout(fig: LayoutDOM, sidebar: LayoutDOM) -> LayoutDOM:
         fig (LayoutDOM): The main content component (e.g., map figure or placeholder Div).
         sidebar (LayoutDOM): The sidebar layout component.
 
+def create_layout(fig, filter_bar, nearby_panel):
+    header_div = create_header()
+    main_content = row(
+        nearby_panel,
+
     Returns:
         LayoutDOM: The final assembled column layout.
     """
@@ -314,8 +424,21 @@ def create_layout(fig: LayoutDOM, sidebar: LayoutDOM) -> LayoutDOM:
 
     final_layout = column(
         header_div,
+
+        filter_bar,
+        main_content,
+        sizing_mode="stretch_both"
+    )
+    return centered_layout
+
+
+def create_sidebar(foodbank_df=None):
+    del foodbank_df
+    return create_filter_bar()
+
         analytics_div,
         main_row,
         sizing_mode="stretch_width"
     )
     return final_layout
+
