@@ -63,22 +63,29 @@ def update():
     selected_eligibility = _selected_labels(eligibility_group)
     selected_days = _selected_labels(day_group)
 
+    # First, apply non-distance-based filters.
+    # We intentionally do not pass user_lat/user_lon/max_distance_miles here
+    # so that distance is not recomputed inside get_foodbank_mask.
     foodbank_mask = get_foodbank_mask(
         foodbank_df,
         resource_type=resource_type,
         open_only=open_only,
         selected_eligibility=selected_eligibility,
         selected_days=selected_days,
-        user_lat=user_location["lat"],
-        user_lon=user_location["lon"],
-        max_distance_miles=distance_slider.value,
+        user_lat=None,
+        user_lon=None,
+        max_distance_miles=None,
     )
-    foodbank_view.filter = BooleanFilter(foodbank_mask.tolist())
 
-    filtered_df = foodbank_df[foodbank_mask].copy()
-
-    if user_location["lat"] is not None and user_location["lon"] is not None and not filtered_df.empty:
-        filtered_df["distance"] = filtered_df.apply(
+    # Optionally refine by distance from the user, computing distances once.
+    distances = None
+    if (
+        user_location["lat"] is not None
+        and user_location["lon"] is not None
+        and not foodbank_df.empty
+    ):
+        # Compute distance for all rows once.
+        distances = foodbank_df.apply(
             lambda row: calculate_distance(
                 user_location["lat"],
                 user_location["lon"],
@@ -87,6 +94,22 @@ def update():
             ),
             axis=1,
         )
+        # Apply distance threshold from the slider.
+        distance_mask = distances <= distance_slider.value
+        combined_mask = foodbank_mask & distance_mask
+    else:
+        combined_mask = foodbank_mask
+
+    foodbank_view.filter = BooleanFilter(combined_mask.tolist())
+
+    filtered_df = foodbank_df[combined_mask].copy()
+
+    if (
+        distances is not None
+        and not filtered_df.empty
+    ):
+        # Attach precomputed distances for the filtered rows and sort by distance.
+        filtered_df["distance"] = distances[combined_mask]
         filtered_df = filtered_df.sort_values("distance")
     else:
         filtered_df = filtered_df.sort_values("Agency")
