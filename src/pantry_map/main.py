@@ -42,7 +42,18 @@ def _selected_labels(checkbox_group):
 
 
 def update():
-    resource_type = resource_type_selector.labels[resource_type_selector.active]
+    labels = resource_type_selector.labels
+    active = resource_type_selector.active
+    if active is None:
+        # Treat None as "Both" if available, otherwise fall back to the first label
+        if "Both" in labels:
+            resource_type = "Both"
+        elif labels:
+            resource_type = labels[0]
+        else:
+            resource_type = None
+    else:
+        resource_type = labels[active]
     open_only = 0 in open_only_toggle.active
     selected_eligibility = _selected_labels(eligibility_group)
     selected_days = _selected_labels(day_group)
