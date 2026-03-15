@@ -16,7 +16,9 @@ sys.path.append(os.path.join(PROJECT_ROOT, "src"))
 from bokeh.io import curdoc
 from bokeh.models import ColumnDataSource, CDSView, BooleanFilter, TapTool
 from pantry_map.data.loader import get_foodbank_df, get_shapes_df, get_transit_df, get_transfers_df
-from pantry_map.components.map import add_markers, add_routes, create_map, update_route, clear_routes
+from pantry_map.components.map import (
+    add_markers, add_routes, create_map, update_route, clear_routes
+)
 from pantry_map.components.layout import create_sidebar, create_layout, format_foodbank_list
 from pantry_map.filters.mask import get_foodbank_mask
 from pantry_map.services.route import CalculateRoute
@@ -54,7 +56,9 @@ y_min, y_max = foodbank_df['y'].min(), foodbank_df['y'].max()
 
 map_fig = create_map(x_min, x_max, y_min, y_max)
 add_routes(map_fig, grouped_shapes_source, route_source)
-foodbank_markers = add_markers(map_fig, user_source, foodbank_highlight_source, foodbank_source, foodbank_view)
+foodbank_markers = add_markers(
+    map_fig, user_source, foodbank_highlight_source, foodbank_source, foodbank_view
+)
 taptool = map_fig.select_one(TapTool)
 if taptool is not None:
     taptool.renderers = [foodbank_markers]
@@ -193,6 +197,7 @@ def on_clear_click():
 
 def marker_callback(attr, old, new):
     """Handle tap selection on a food bank marker."""
+    del attr, old
     if not new:
         clear_routes(foodbank_highlight_source, foodbank_source, route_source)
         location_list.text = format_foodbank_list(
@@ -225,7 +230,7 @@ day_group.on_change("active", lambda attr, old, new: update())
 address_input.on_change("value", on_address_change)
 search_button.on_click(on_search_click)
 clear_button.on_click(on_clear_click)
-foodbank_source.selected.on_change("indices", marker_callback)
+foodbank_source.selected.on_change("indices", marker_callback)  # pylint: disable=no-member
 
 # Initial population
 update()

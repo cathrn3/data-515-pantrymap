@@ -113,13 +113,14 @@ def add_routes(fig, grouped_shapes_source, route_source):
     )
 
 def update_route(route, foodbank_loc, source, foodbank_highlight_source, route_source):
+    """Update the highlighted food bank marker and draw the transit route."""
     foodbank_highlight_source.data = {
         "x": [foodbank_loc[0]],
         "y": [foodbank_loc[1]]
     }
 
     if not route:
-        route_source.data = {"xs": [], "ys": [], "color": []} # TODO: render error
+        route_source.data = {"xs": [], "ys": [], "color": []}
         return
 
     highlight_df = source[source["unique_key"].isin(route[1:-1])]
@@ -147,6 +148,7 @@ def update_route(route, foodbank_loc, source, foodbank_highlight_source, route_s
     }
 
 def clear_routes(foodbank_highlight_source, foodbank_source, route_source):
+    """Clear the highlighted food bank marker and any drawn route."""
     foodbank_highlight_source.data = {"x": [], "y": []}
     foodbank_source.selected.indices = []
     route_source.data = {
