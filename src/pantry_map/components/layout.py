@@ -9,7 +9,7 @@ for formatting food bank information in HTML.
 from datetime import datetime
 import pandas as pd
 from bokeh.layouts import column, row
-from bokeh.models import MultiSelect, Div, TextInput, Button
+from bokeh.models import MultiSelect, Div, TextInput, Button, LayoutDOM
 from pantry_map.utilities.constants import COLORS
 
 def is_open_today(hours_str):
@@ -261,7 +261,7 @@ def create_header():
         """, sizing_mode="stretch_width")
     return header_div
 
-def create_layout(fig, sidebar):
+def create_layout(fig: LayoutDOM, sidebar: LayoutDOM) -> LayoutDOM:
     """
     Assemble the final application layout.
 
