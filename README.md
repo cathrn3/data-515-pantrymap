@@ -2,6 +2,12 @@
 
 [![Python Version](https://img.shields.io/badge/python-3.8%2B-blue.svg)](https://www.python.org/)
 [![License: MIT](https://img.shields.io/badge/License-MIT-yellow.svg)](https://opensource.org/licenses/MIT)
+[![.github/workflows/build_test.yml](https://github.com/cathrn3/data-515-pantrymap/actions/workflows/build_test.yml/badge.svg)](https://github.com/cathrn3/data-515-pantrymap/actions/workflows/build_test.yml)
+[![Coverage Status](https://coveralls.io/repos/github/cathrn3/data-515-pantrymap/badge.svg?branch=main)](https://coveralls.io/github/cathrn3/data-515-pantrymap?branch=main)
+
+
+## Project Title
+**PantryMap: Accessible Food Bank Locator**
 
 **PantryMap** is a research-driven tool designed to improve emergency food accessibility in Seattle. By integrating food bank data with public transportation schedules, we aim to bridge the gap between food resources and the communities that need them most.
 

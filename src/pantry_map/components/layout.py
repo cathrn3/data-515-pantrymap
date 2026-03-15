@@ -9,7 +9,7 @@ for formatting food bank information in HTML.
 from datetime import datetime
 import pandas as pd
 from bokeh.layouts import column, row
-from bokeh.models import MultiSelect, Div, TextInput, Button
+from bokeh.models import Div, TextInput, Button, Slider, CheckboxGroup, RadioButtonGroup
 from pantry_map.utilities.constants import COLORS
 
 def is_open_today(hours_str):
@@ -84,9 +84,9 @@ def format_foodbank_list(df):
             status_badge = ""
 
         card = f"""
-        <div style='padding: 16px; border: 1px solid #e1e4e8; border-radius: 8px; 
+        <div style='padding: 16px; border: 1px solid #e1e4e8; border-radius: 8px;
         margin-bottom: 15px; background: white; box-shadow: 0 1px 3px rgba(0,0,0,0.05);'>
-            <div style='display: flex; justify-content: space-between; align-items: start; 
+            <div style='display: flex; justify-content: space-between; align-items: start;
             margin-bottom: 8px;'>
                 <h3 style='margin: 0; font-size: 16px; color: #24292e; line-height: 1.3;'>
                     {row_data['Agency']}
@@ -100,7 +100,7 @@ def format_foodbank_list(df):
             </div>
             {dist_html}
             <div style='margin-top: 12px; padding-top: 10px; border-top: 1px solid #f6f8fa;'>
-                <span style='background: #f1f8ff; color: #0366d6; padding: 3px 8px; 
+                <span style='background: #f1f8ff; color: #0366d6; padding: 3px 8px;
                 border-radius: 12px; font-size: 10px; font-weight: 600;'>
                     {row_data['Food Resource Type']}
                 </span>
@@ -123,59 +123,75 @@ def create_sidebar(foodbank_df):
     Returns:
         tuple: (sidebar_layout, dict_of_widgets)
     """
-    # Dropdown filter
-    options = sorted(list(foodbank_df["Food Resource Type"].unique()))
-    resource_type_dropdown = MultiSelect(
-        title="Filter by Resource Type:",
-        value=options,
-        options=options,
-        height=150,
-        sizing_mode="stretch_width"
+    resource_type_selector = RadioButtonGroup(
+        labels=["Both", "Food Bank", "Meal"],
+        active=0,
+        width=360,
+    )
+
+    distance_slider = Slider(title="Distance (miles)", start=1, end=25, value=10, step=1, width=360)
+    open_only_toggle = CheckboxGroup(labels=["Open locations only"], active=[])
+    eligibility_group = CheckboxGroup(
+        labels=["General Public", "Seniors", "Youth"],
+        active=[],
+    )
+    day_group = CheckboxGroup(
+        labels=["Monday", "Tuesday", "Wednesday", "Thursday", "Friday", "Saturday", "Sunday"],
+        active=[],
     )
 
     # Text input and search button for address input
-    address_input = TextInput(
-        value="", title="Enter your address:", placeholder="e.g. 1000 4th Ave, Seattle")
-    search_button = Button(
-        label="Find Food Banks", button_type="primary", sizing_mode="stretch_width")
-    clear_button = Button(
-        label="Clear", button_type="light", sizing_mode="stretch_width")
+    address_input = TextInput(value="", title="Enter your address:")
+    search_button = Button(label="Search", button_type="primary")
+    clear_button = Button(label="Clear", button_type="default")
 
     # Placeholder for results / location list
-    results_div = Div(text="", sizing_mode="stretch_width")
+    results_div = Div(text="", width=360)
     location_list = Div(
         text="<p style='color: #666;'>Loading list...</p>", sizing_mode="stretch_width")
 
     sidebar_layout = column(
         Div(
             text="""
-            <div style='padding: 5px 0; font-size: 12px; font-weight: 700; text-transform: uppercase; 
+            <div style='padding: 5px 0; font-size: 12px; font-weight: 700; text-transform: uppercase;
             color: #57606a; letter-spacing: 0.5px;'>
                 Search & Filters
             </div>""",
             sizing_mode="stretch_width"
         ),
-        resource_type_dropdown,
+        Div(text="<div style='font-size:12px; font-weight:600; margin: 4px 0;'>Food resource type</div>"),
+        resource_type_selector,
+        Div(text="<div style='font-size:12px; font-weight:600; margin: 8px 0 2px;'>Distance from address</div>"),
+        distance_slider,
+        Div(text="<div style='font-size:12px; font-weight:600; margin: 8px 0 2px;'>Operational status</div>"),
+        open_only_toggle,
+        Div(text="<div style='font-size:12px; font-weight:600; margin: 8px 0 2px;'>Eligibility</div>"),
+        eligibility_group,
+        Div(text="<div style='font-size:12px; font-weight:600; margin: 8px 0 2px;'>Available days</div>"),
+        day_group,
         address_input,
-        row(search_button, clear_button, sizing_mode="stretch_width"),
+        row(search_button, clear_button, width=360),
         results_div,
         Div(
             text="""
             <hr style='border: 0; border-top: 1px solid #e1e4e8; margin: 15px 0;'>
-            <div style='font-size: 12px; font-weight: 700; text-transform: uppercase; 
+            <div style='font-size: 12px; font-weight: 700; text-transform: uppercase;
             color: #57606a; letter-spacing: 0.5px; margin-bottom: 10px;'>
                 Nearby Food Banks
             </div>""",
             sizing_mode="stretch_width"
         ),
         location_list,
-        width=360,
-        sizing_mode="fixed",
-        spacing=10
+        width=380,
+        sizing_mode="fixed"
     )
 
     return sidebar_layout, {
-        "resource_type_dropdown": resource_type_dropdown,
+        "resource_type_selector": resource_type_selector,
+        "distance_slider": distance_slider,
+        "open_only_toggle": open_only_toggle,
+        "eligibility_group": eligibility_group,
+        "day_group": day_group,
         "address_input": address_input,
         "search_button": search_button,
         "clear_button": clear_button,
@@ -192,38 +208,38 @@ def create_analytics_panel():
     """
     return f"""
     <div style="display: grid; grid-template-columns: repeat(4, 1fr); gap: 16px; margin-bottom: 24px;">
-        <div style="padding: 16px; background: white; border: 1px solid {COLORS['border']}; 
+        <div style="padding: 16px; background: white; border: 1px solid {COLORS['border']};
         border-radius: 6px; border-left: 3px solid {COLORS['accent_blue']};">
-            <div style="color: {COLORS['text_tertiary']}; font-weight: 600; font-size: 11px; 
+            <div style="color: {COLORS['text_tertiary']}; font-weight: 600; font-size: 11px;
             text-transform: uppercase; letter-spacing: 0.5px; margin-bottom: 8px;">Total Locations</div>
-            <div style="font-size: 28px; font-weight: 600; color: {COLORS['text_primary']}; 
+            <div style="font-size: 28px; font-weight: 600; color: {COLORS['text_primary']};
             margin-bottom: 4px;">placeholder</div>
             <div style="font-size: 12px; color: {COLORS['text_secondary']};">across Seattle</div>
         </div>
-        
-        <div style="padding: 16px; background: white; border: 1px solid {COLORS['border']}; 
+
+        <div style="padding: 16px; background: white; border: 1px solid {COLORS['border']};
         border-radius: 6px; border-left: 3px solid {COLORS['accent_green']};">
-            <div style="color: {COLORS['text_tertiary']}; font-weight: 600; font-size: 11px; 
+            <div style="color: {COLORS['text_tertiary']}; font-weight: 600; font-size: 11px;
             text-transform: uppercase; letter-spacing: 0.5px; margin-bottom: 8px;">Transit Accessible</div>
-            <div style="font-size: 28px; font-weight: 600; color: {COLORS['text_primary']}; 
+            <div style="font-size: 28px; font-weight: 600; color: {COLORS['text_primary']};
             margin-bottom: 4px;">placeholder</div>
             <div style="font-size: 12px; color: {COLORS['text_secondary']};">100% coverage</div>
         </div>
-        
-        <div style="padding: 16px; background: white; border: 1px solid {COLORS['border']}; 
+
+        <div style="padding: 16px; background: white; border: 1px solid {COLORS['border']};
         border-radius: 6px; border-left: 3px solid {COLORS['accent_orange']};">
-            <div style="color: {COLORS['text_tertiary']}; font-weight: 600; font-size: 11px; 
+            <div style="color: {COLORS['text_tertiary']}; font-weight: 600; font-size: 11px;
             text-transform: uppercase; letter-spacing: 0.5px; margin-bottom: 8px;">Avg Accessibility</div>
-            <div style="font-size: 28px; font-weight: 600; color: {COLORS['text_primary']}; 
+            <div style="font-size: 28px; font-weight: 600; color: {COLORS['text_primary']};
             margin-bottom: 4px;">placeholder</div>
             <div style="font-size: 12px; color: {COLORS['text_secondary']};">out of 100</div>
         </div>
-        
-        <div style="padding: 16px; background: white; border: 1px solid {COLORS['border']}; 
+
+        <div style="padding: 16px; background: white; border: 1px solid {COLORS['border']};
         border-radius: 6px; border-left: 3px solid {COLORS['accent_green']};">
-            <div style="color: {COLORS['text_tertiary']}; font-weight: 600; font-size: 11px; 
+            <div style="color: {COLORS['text_tertiary']}; font-weight: 600; font-size: 11px;
             text-transform: uppercase; letter-spacing: 0.5px; margin-bottom: 8px;">Weekly Reach</div>
-            <div style="font-size: 28px; font-weight: 600; color: {COLORS['text_primary']}; 
+            <div style="font-size: 28px; font-weight: 600; color: {COLORS['text_primary']};
             margin-bottom: 4px;">placeholder</div>
             <div style="font-size: 12px; color: {COLORS['text_secondary']};">unique visitors</div>
         </div>
