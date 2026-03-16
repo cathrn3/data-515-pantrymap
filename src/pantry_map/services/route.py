@@ -154,7 +154,19 @@ class CalculateRoute:  # pylint: disable=too-many-instance-attributes
         """
         food_bank_ids = set(self.food_bank_df["bank_id"].values)
 
-        # Classify each edge as "walk" or a (short_name, row) tuple
+        # Lazily build a lookup from unique_key -> {"route_short_name": ..., "color": ...}
+        # to avoid repeated boolean indexing and to handle missing keys safely.
+        if not hasattr(self, "_route_lookup"):
+            try:
+                self._route_lookup = (
+                    self.transit_df
+                    .set_index("unique_key")[["route_short_name", "color"]]
+                    .to_dict("index")
+                )
+            except Exception:  # Fallback if transit_df is missing expected columns
+                self._route_lookup = {}
+
+        # Classify each edge as "walk" or a (short_name, info) tuple
         classified = []
         for node_a, node_b in zip(route, route[1:]):
             if (
@@ -165,10 +177,17 @@ class CalculateRoute:  # pylint: disable=too-many-instance-attributes
             ):
                 classified.append(("walk", None))
             else:
-                row = self.transit_df.loc[
-                    self.transit_df["unique_key"] == node_a
-                ].iloc[0]
-                classified.append((row["route_short_name"], row))
+                route_info = self._route_lookup.get(node_a)
+                # If no route info is found, treat this edge as a walk/transfer leg
+                if not route_info:
+                    classified.append(("walk", None))
+                else:
+                    short_name = route_info.get("route_short_name")
+                    if not short_name:
+                        # Missing short name: fall back to walk to avoid breaking routing
+                        classified.append(("walk", None))
+                    else:
+                        classified.append((short_name, route_info))
 
         # Group consecutive same-label edges into legs
         legs = []
@@ -177,10 +196,21 @@ class CalculateRoute:  # pylint: disable=too-many-instance-attributes
                 legs.append({"type": "walk"})
             else:
                 _, first_row = next(group)
+                # Safely extract color; default to None if unavailable
+                color = None
+                if first_row is not None:
+                    try:
+                        color = (
+                            first_row.get("color")
+                            if hasattr(first_row, "get")
+                            else first_row["color"]
+                        )
+                    except Exception:
+                        color = None
                 legs.append({
                     "type": "bus",
                     "short_name": short_name,
-                    "color": first_row["color"],
+                    "color": color,
                 })
 
         return legs
