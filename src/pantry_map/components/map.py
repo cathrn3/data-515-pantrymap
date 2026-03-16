@@ -1,7 +1,8 @@
 """Map components for the PantryMap Bokeh application."""
 
-from bokeh.plotting import figure
 import math
+
+from bokeh.plotting import figure
 
 
 def create_map(foodbank_df):

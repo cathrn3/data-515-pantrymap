@@ -7,8 +7,9 @@ for formatting food bank and route information in HTML.
 """
 
 import html
-import pandas as pd
 from datetime import datetime
+
+import pandas as pd
 from bokeh.layouts import column, row
 from bokeh.models import (
     Div, TextInput, Button, Slider, RadioButtonGroup, MultiChoice
@@ -177,6 +178,35 @@ def create_nearby_panel():
     return panel, {"location_list": location_list}
 
 
+def _website_html(row_data):
+    website = row_data.get("Website")
+    website_str = "" if website is None else str(website).strip()
+    if not website_str or website_str.lower() in {"nan", "na", "n/a", "not available", ""}:
+        return ""
+    website_url = html.escape(website_str, quote=True)
+    return (
+        f"<div style='margin-top:2px;'>"
+        f"<a href='{website_url}' target='_blank' "
+        f"style='color:#0969da; font-size:13px;'>Visit website</a>"
+        f"</div>"
+    )
+
+
+def _status_badge(row_data):
+    open_today = is_open_today(row_data.get("Days/Hours"))
+    if open_today is True:
+        return (
+            "<span style='background:#dafbe1; color:#1a7f37; padding:2px 7px; "
+            "border-radius:4px; font-size:10px; font-weight:700;'>Open Today</span>"
+        )
+    if open_today is False:
+        return (
+            "<span style='background:#ffebe9; color:#cf222e; padding:2px 7px; "
+            "border-radius:4px; font-size:10px; font-weight:700;'>Closed Today</span>"
+        )
+    return ""
+
+
 def format_nearby_foodbanks(foodbank_data):
     """Format filtered food bank rows as HTML cards for the nearby panel."""
     if foodbank_data is None or foodbank_data.empty:
@@ -196,33 +226,8 @@ def format_nearby_foodbanks(foodbank_data):
         else:
             phone_display = html.escape(phone_str, quote=True)
         resource_type = html.escape(str(row_data.get("Food Resource Type", "")), quote=True)
-
-        website = row_data.get("Website")
-        website_str = "" if website is None else str(website).strip()
-        if not website_str or website_str.lower() in {"nan", "na", "n/a", "not available", ""}:
-            website_html = ""
-        else:
-            website_url = html.escape(website_str, quote=True)
-            website_html = (
-                f"<div style='margin-top:2px;'>"
-                f"<a href='{website_url}' target='_blank' "
-                f"style='color:#0969da; font-size:13px;'>Visit website</a>"
-                f"</div>"
-            )
-
-        open_today = is_open_today(row_data.get("Days/Hours"))
-        if open_today is True:
-            status_badge = (
-                "<span style='background:#dafbe1; color:#1a7f37; padding:2px 7px; "
-                "border-radius:4px; font-size:10px; font-weight:700;'>Open Today</span>"
-            )
-        elif open_today is False:
-            status_badge = (
-                "<span style='background:#ffebe9; color:#cf222e; padding:2px 7px; "
-                "border-radius:4px; font-size:10px; font-weight:700;'>Closed Today</span>"
-            )
-        else:
-            status_badge = ""
+        website_html = _website_html(row_data)
+        status_badge = _status_badge(row_data)
 
         distance_html = ""
         if show_distance:

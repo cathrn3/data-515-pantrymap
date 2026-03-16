@@ -1,5 +1,8 @@
+"""Filtering masks for the PantryMap food bank dataset."""
 from datetime import datetime
+
 import numpy as np
+
 from pantry_map.utilities.utility import calculate_distance
 
 
@@ -25,7 +28,9 @@ def _operational_status_mask(foodbank_df, open_only, current_day=None):
 
     if current_day is None:
         weekday_index = datetime.now().weekday()  # 0 = Monday, 6 = Sunday
-        english_weekdays = ["Monday", "Tuesday", "Wednesday", "Thursday", "Friday", "Saturday", "Sunday"]
+        english_weekdays = [
+            "Monday", "Tuesday", "Wednesday", "Thursday", "Friday", "Saturday", "Sunday"
+        ]
         current_day = english_weekdays[weekday_index]
 
     status_mask = (
