@@ -1,15 +1,19 @@
 name: ci_pantrymap
 channels:
+  - conda-forge
   - defaults
 dependencies:
-  - build
-  - numpy
-  - pylint
+  - build=0.10.0
+  - numpy=2.4.2
+  - pylint=4.0.4
   - python=3.10
-  - coverage
-  - pandas
+  - coverage=7.13.4
+  - pandas=3.0.1
   - pip
-  - geopy
-  - bokeh
-  - networkx
-  - scikit-learn
+  - geopy=2.4.1
+  - bokeh=3.9.0
+  - networkx=3.6.1
+  - scikit-learn=1.8.0
+  - geopandas=1.1.2
+  - pip:
+      - -r requirements.txt

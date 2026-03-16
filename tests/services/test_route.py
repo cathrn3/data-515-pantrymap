@@ -1,13 +1,14 @@
+"""Tests for routing."""
 import unittest
+from unittest.mock import patch
 import pandas as pd
 import numpy as np
-from unittest.mock import patch
-import networkx as nx
 
 from pantry_map.services.route import CalculateRoute
 
 
 class TestCalculateRoute(unittest.TestCase):
+    """Tests for CalculateRoute."""
     @classmethod
     def setUpClass(cls):
         """
@@ -59,7 +60,7 @@ class TestCalculateRoute(unittest.TestCase):
             ],
             "estimated_travel_time_minutes_between_stops": [1, 2, 3, 1, 2, 1, 2, 5, 5],
             "stop_lat": [47.60, 47.70, 47.60, 47.71, 47.80, 47.80, 47.71, 47.80, 47.71],
-            "stop_lon": [-122.33, -122.33, -122.33, -122.33, -122.33, -122.33, -122.33, -122.33, -122.33]
+            "stop_lon": [-122.33]*9
         })
         # Available bus transfers
         cls.transfers_df = pd.DataFrame({
@@ -69,11 +70,13 @@ class TestCalculateRoute(unittest.TestCase):
         })
 
     def setUp(self):
-        self.routeCalculator = CalculateRoute(self.food_bank_df, self.transit_df, self.transfers_df)
+        self.route_calculator = CalculateRoute(
+            self.food_bank_df, self.transit_df, self.transfers_df
+        )
 
     def test_graph(self):
         """Ensure graph is correctly initialized"""
-        graph = self.routeCalculator.graph
+        graph = self.route_calculator.graph
 
         expected_edges = {
             ("route1stop1", "route1stop2"),
@@ -91,19 +94,19 @@ class TestCalculateRoute(unittest.TestCase):
 
     def test_set_user_location(self):
         """Test user location gets connected to the graph"""
-        self.routeCalculator.set_user_location((47.59, -122.33))
+        self.route_calculator.set_user_location((47.59, -122.33))
 
-        graph = self.routeCalculator.graph
+        graph = self.route_calculator.graph
         self.assertTrue(graph.has_edge("USER", "route1stop1"))
         self.assertTrue(graph.has_edge("USER", "foodbank1"))
-        self.assertEqual(self.routeCalculator.get_user_location(), (47.59, -122.33))
+        self.assertEqual(self.route_calculator.get_user_location(), (47.59, -122.33))
 
     def test_reset_user_location(self):
         """Test previous user location gets reset upon new location"""
-        self.routeCalculator.set_user_location((47.59, -122.33))
-        self.routeCalculator.set_user_location((47.81, -122.33))
+        self.route_calculator.set_user_location((47.59, -122.33))
+        self.route_calculator.set_user_location((47.81, -122.33))
 
-        graph = self.routeCalculator.graph
+        graph = self.route_calculator.graph
         self.assertFalse(graph.has_edge("USER", "route1stop1"))
 
         expected_user_edges = {
@@ -116,24 +119,24 @@ class TestCalculateRoute(unittest.TestCase):
 
     def test_empty_user_location(self):
         """Should return no route if user location is not set"""
-        self.routeCalculator.set_user_location(None)
-        est_time, route, legs = self.routeCalculator.get_route_to_destination("foodbank1")
+        self.route_calculator.set_user_location(None)
+        est_time, route, legs = self.route_calculator.get_route_to_destination("foodbank1")
         self.assertIsNone(est_time)
         self.assertIsNone(route)
         self.assertIsNone(legs)
 
     def test_direct_walking(self):
         """Should find route which can be reached via walking"""
-        self.routeCalculator.set_user_location((47.59, -122.33))
-        est_time, route, legs = self.routeCalculator.get_route_to_destination("foodbank1")
+        self.route_calculator.set_user_location((47.59, -122.33))
+        est_time, route, legs = self.route_calculator.get_route_to_destination("foodbank1")
         self.assertAlmostEqual(est_time, 20, delta=1)
         self.assertEqual(route, ["USER", "foodbank1"])
         self.assertEqual(legs, [{"type": "walk"}])
 
     def test_transit_route(self):
         """Should find a route which requires public transit"""
-        self.routeCalculator.set_user_location((47.59, -122.33))
-        est_time, route, legs = self.routeCalculator.get_route_to_destination("foodbank2")
+        self.route_calculator.set_user_location((47.59, -122.33))
+        est_time, route, legs = self.route_calculator.get_route_to_destination("foodbank2")
         self.assertAlmostEqual(est_time, 42, delta=1)
         self.assertEqual(route, ["USER", "route1stop1", "route1stop2", "foodbank2"])
         self.assertEqual(legs, [
@@ -144,8 +147,8 @@ class TestCalculateRoute(unittest.TestCase):
 
     def test_transit_route_with_transfer(self):
         """Should find a route which requires a transfer between buses"""
-        self.routeCalculator.set_user_location((47.59, -122.33))
-        est_time, route, legs = self.routeCalculator.get_route_to_destination("foodbank3")
+        self.route_calculator.set_user_location((47.59, -122.33))
+        est_time, route, legs = self.route_calculator.get_route_to_destination("foodbank3")
         self.assertAlmostEqual(est_time, 73, delta=1)
         self.assertEqual(
             route,
@@ -160,26 +163,26 @@ class TestCalculateRoute(unittest.TestCase):
 
     def test_directional_route(self):
         """Ensure route takes directionality into account and takes the optimal route"""
-        self.routeCalculator.set_user_location((47.71, -122.33))
-        _, route, _ = self.routeCalculator.get_route_to_destination("foodbank3")
+        self.route_calculator.set_user_location((47.71, -122.33))
+        _, route, _ = self.route_calculator.get_route_to_destination("foodbank3")
         self.assertEqual(route, ["USER", "route2stop1", "route2stop2", "foodbank3"])
 
-        self.routeCalculator.set_user_location((47.81, -122.33))
-        _, route, _ = self.routeCalculator.get_route_to_destination("foodbank2")
+        self.route_calculator.set_user_location((47.81, -122.33))
+        _, route, _ = self.route_calculator.get_route_to_destination("foodbank2")
         self.assertEqual(route, ["USER", "route3stop1", "route3stop2", "foodbank2"])
 
     def test_no_route_user_too_far(self):
         """Should return None if no route is found"""
-        self.routeCalculator.set_user_location((40.00, -122.33))
-        est_time, route, legs = self.routeCalculator.get_route_to_destination("foodbank1")
+        self.route_calculator.set_user_location((40.00, -122.33))
+        est_time, route, legs = self.route_calculator.get_route_to_destination("foodbank1")
         self.assertIsNone(est_time)
         self.assertIsNone(route)
         self.assertIsNone(legs)
 
     def test_no_transit_route(self):
         """Should return None if no route is found"""
-        self.routeCalculator.set_user_location((47.59, -122.33))
-        est_time, route, legs = self.routeCalculator.get_route_to_destination("foodbank4")
+        self.route_calculator.set_user_location((47.59, -122.33))
+        est_time, route, legs = self.route_calculator.get_route_to_destination("foodbank4")
         self.assertIsNone(est_time)
         self.assertIsNone(route)
         self.assertIsNone(legs)
@@ -188,8 +191,8 @@ class TestCalculateRoute(unittest.TestCase):
     def test_no_route_on_exception(self, mock_dijkstra):
         """Gracefully returns None on unexpected exceptions"""
         mock_dijkstra.side_effect = Exception()
-        self.routeCalculator.set_user_location((47.59, -122.33))
-        est_time, route, legs = self.routeCalculator.get_route_to_destination("foodbank1")
+        self.route_calculator.set_user_location((47.59, -122.33))
+        est_time, route, legs = self.route_calculator.get_route_to_destination("foodbank1")
         self.assertIsNone(est_time)
         self.assertIsNone(route)
         self.assertIsNone(legs)

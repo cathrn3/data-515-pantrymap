@@ -1,3 +1,4 @@
+"""Unit tests for geocode addressing."""
 import unittest
 from unittest.mock import patch
 from geopy.exc import GeocoderTimedOut, GeocoderServiceError
@@ -8,19 +9,19 @@ class TestAddressValidation(unittest.TestCase):
 
     def test_valid_address(self):
         """Test that a non-empty address is considered valid."""
-        valid, msg, address = validate_address("123 Main St")
+        valid, msg, _ = validate_address("123 Main St")
         self.assertTrue(valid)
         self.assertEqual(msg, "")
 
     def test_empty_address(self):
         """Test that an empty string is considered invalid."""
-        valid, msg, address = validate_address("")
+        valid, msg, _ = validate_address("")
         self.assertFalse(valid)
         self.assertEqual(msg, "Address cannot be empty.")
 
     def test_whitespace_address(self):
         """Test that an address with only spaces is considered invalid."""
-        valid, msg, address = validate_address("   ")
+        valid, _, _ = validate_address("   ")
         self.assertFalse(valid)
 
 class TestGeocode(unittest.TestCase):
@@ -28,7 +29,6 @@ class TestGeocode(unittest.TestCase):
 
     def test_known_location(self):
         """Test that a known location returns valid latitude and longitude."""
-        
         lat, lon = geocode_address("85 Pike St. Seattle WA")
         self.assertIsNotNone(lat)
         self.assertIsNotNone(lon)

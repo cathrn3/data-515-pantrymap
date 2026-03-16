@@ -8,13 +8,13 @@ for formatting food bank and route information in HTML.
 
 import html
 from datetime import datetime
+import re
 
 import pandas as pd
 from bokeh.layouts import column, row
 from bokeh.models import (
     Div, TextInput, Button, Slider, RadioButtonGroup, MultiChoice
 )
-import re
 
 def is_open_today(hours_str):
     """
