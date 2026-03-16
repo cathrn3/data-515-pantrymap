@@ -18,7 +18,7 @@ sys.path.append(os.path.join(PROJECT_ROOT, "src"))
 from bokeh.io import curdoc
 
 from bokeh.models import ColumnDataSource, CDSView, BooleanFilter
-from pantry_map.data.loader import get_foodbank_df, get_transit_df
+from pantry_map.data.loader import get_foodbank_df, get_transit_df, get_shapes_df
 from pantry_map.components.map import add_markers, add_routes, create_map
 from pantry_map.components.layout import (
     create_filter_bar,
@@ -34,8 +34,8 @@ from pantry_map.utilities.utility import (
 )
 
 # 1. Load Data
-transit_df = get_transit_df()
-transit_source = ColumnDataSource(transit_df)
+transit_shapes_df = get_shapes_df()
+transit_source = ColumnDataSource(transit_shapes_df)
 
 foodbank_df = get_foodbank_df()
 foodbank_initial_mask = [True] * len(foodbank_df)
