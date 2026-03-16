@@ -11,7 +11,7 @@ Each example provides step-by-step instructions along with screenshots illustrat
 
 ---
 
-# Example 1: Browsing and Filtering Food Banks
+## Example 1: Browsing and Filtering Food Banks
 
 ---
 
@@ -67,7 +67,7 @@ This allows you to quickly determine whether the location meets your needs.
 
 ---
 
-# Example 2: Finding Food Banks Near an Address
+## Example 2: Finding Food Banks Near an Address
 
 ---
 
@@ -127,7 +127,7 @@ Information shown includes:
 
 ---
 
-# Summary
+## Summary
 
 Using PantryMap, you can:
 
