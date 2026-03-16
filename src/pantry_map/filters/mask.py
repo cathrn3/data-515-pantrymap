@@ -1,15 +1,24 @@
+"""Filtering masks for the PantryMap food bank dataset."""
 from datetime import datetime
+
 import numpy as np
+
 from pantry_map.utilities.utility import calculate_distance
 
 
 def _resource_type_mask(foodbank_df, resource_type):
-    resource_series = foodbank_df["Food Resource Type"].fillna("").astype(str)
+    resource_series = (
+        foodbank_df["Food Resource Type"]
+        .fillna("")
+        .astype(str)
+        .str.strip()
+        .str.lower()
+    )
 
     if resource_type == "Food Bank":
-        return resource_series.str.contains("Food Bank", case=False, regex=False)
+        return resource_series.eq("food bank")
     if resource_type == "Meal":
-        return resource_series.str.contains("Meal", case=False, regex=False)
+        return resource_series.eq("meal")
     return np.ones(len(foodbank_df), dtype=bool)
 
 
@@ -19,7 +28,9 @@ def _operational_status_mask(foodbank_df, open_only, current_day=None):
 
     if current_day is None:
         weekday_index = datetime.now().weekday()  # 0 = Monday, 6 = Sunday
-        english_weekdays = ["Monday", "Tuesday", "Wednesday", "Thursday", "Friday", "Saturday", "Sunday"]
+        english_weekdays = [
+            "Monday", "Tuesday", "Wednesday", "Thursday", "Friday", "Saturday", "Sunday"
+        ]
         current_day = english_weekdays[weekday_index]
 
     status_mask = (

@@ -1,17 +1,19 @@
 """
 Layout components for the PantryMap Bokeh application.
 
-This module provides functions to create the sidebar, header, analytics panel,
-and the main layout of the application. It also includes helper functions
-for formatting food bank information in HTML.
+This module provides functions to create the filter bar, search bar, nearby panel,
+header, and the main layout of the application. It also includes helper functions
+for formatting food bank and route information in HTML.
 """
 
 import html
 from datetime import datetime
+
 import pandas as pd
 from bokeh.layouts import column, row
-from bokeh.models import Div, TextInput, Button, Slider, CheckboxGroup, RadioButtonGroup, LayoutDOM
-from pantry_map.utilities.constants import COLORS
+from bokeh.models import (
+    Div, TextInput, Button, Slider, RadioButtonGroup, MultiChoice
+)
 
 def is_open_today(hours_str):
     """
@@ -46,276 +48,282 @@ def is_open_today(hours_str):
 
     return False
 
-def format_foodbank_list(foodbank_data):
-    """
-    Generate HTML for the list of food banks.
 
-    Args:
-        foodbank_data (pd.DataFrame): Dataframe containing food bank information.
-
-    Returns:
-        str: HTML string representing the list of food banks.
-    """
-    if foodbank_data is None or foodbank_data.empty:
-        return ("<div style='padding: 20px; text-align: center; color: #666;'>"
-                "No food banks found.</div>")
-
-    cards = []
-    show_distance = 'distance' in foodbank_data.columns
-
-    for _, row_data in foodbank_data.iterrows():
-        phone = row_data['Phone Number'] if pd.notna(row_data['Phone Number']) else "Not available"
-        dist_html = (
-            f"<div style='margin-top: 8px; font-size: 13px; font-weight: 600; color: #6a737d;'>"
-            f"● {row_data['distance']} miles away</div>"
-            if show_distance else ""
+def _label(text):
+    return Div(
+        text=(
+            "<div style='font-size:11px; font-weight:700; margin:0 0 6px; "
+            "color:#6b7280; text-transform:uppercase; letter-spacing:0.4px;'>"
+            f"{text}</div>"
         )
+    )
 
-        # Escape dataset-derived text fields before inserting into HTML
-        agency = html.escape(str(row_data['Agency']), quote=True)
-        location = html.escape(str(row_data['Location']), quote=True)
-        address = html.escape(str(row_data['Address']), quote=True)
-        phone_display = html.escape(str(phone), quote=True)
-        resource_type = html.escape(str(row_data['Food Resource Type']), quote=True)
 
-        # Detection
-        is_open = is_open_today(row_data.get('Days/Hours', ''))
-        if is_open is True:
-            status_badge = ("<span style='background: #dafbe1; color: #1a7f37; padding: 2px 6px; "
-                            "border-radius: 4px; font-size: 10px; font-weight: 700; "
-                            "margin-left: 10px;'>OPEN TODAY</span>")
-        elif is_open is False:
-            status_badge = ("<span style='background: #ffebe9; color: #cf222e; padding: 2px 6px; "
-                            "border-radius: 4px; font-size: 10px; font-weight: 700; "
-                            "margin-left: 10px;'>CLOSED TODAY</span>")
-        else:
-            status_badge = ""
+def _divider():
+    return Div(
+        text="",
+        width=2,
+        styles={"border-left": "1px solid #e5e7eb", "align-self": "stretch",
+                "margin": "0 20px"},
+    )
 
-        card = f"""
-        <div style='padding: 16px; border: 1px solid #e1e4e8; border-radius: 8px;
-        margin-bottom: 15px; background: white; box-shadow: 0 1px 3px rgba(0,0,0,0.05);'>
-            <div style='display: flex; justify-content: space-between; align-items: start;
-            margin-bottom: 8px;'>
-                <h3 style='margin: 0; font-size: 16px; color: #24292e; line-height: 1.3;'>
-                    {agency}
-                </h3>
-                {status_badge}
-            </div>
-            <div style='font-size: 13px; color: #586069;'>
-                <p style='margin: 4px 0;'>{location}</p>
-                <p style='margin: 2px 0;'>{address}</p>
-                <p style='margin: 2px 0;'>{phone_display}</p>
-            </div>
-            {dist_html}
-            <div style='margin-top: 12px; padding-top: 10px; border-top: 1px solid #f6f8fa;'>
-                <span style='background: #f1f8ff; color: #0366d6; padding: 3px 8px;
-                border-radius: 12px; font-size: 10px; font-weight: 600;'>
-                    {resource_type}
-                </span>
-            </div>
-        </div>
-        """
-        cards.append(card)
 
-    cards_joined = "".join(cards)
-    return (f"<div style='max-height: 520px; overflow-y: auto; padding: 10px; "
-            f"background: #fafbfc;'>{cards_joined}</div>")
-
-def create_sidebar():
-    """
-    Create the sidebar layout and widgets.
-
-    Returns:
-        tuple: (sidebar_layout, dict_of_widgets)
-    """
+def create_filter_bar():
+    """Create the compact top filter strip and return widgets for callbacks."""
     resource_type_selector = RadioButtonGroup(
         labels=["Both", "Food Bank", "Meal"],
         active=0,
-        width=360,
+        width=230,
+    )
+    eligibility_group = MultiChoice(
+        options=["General Public", "Seniors", "Youth"],
+        value=[],
+        width=280,
+    )
+    day_group = MultiChoice(
+        options=["Monday", "Tuesday", "Wednesday", "Thursday",
+                 "Friday", "Saturday", "Sunday"],
+        value=[],
+        width=480,
+
     )
 
-    distance_slider = Slider(title="Distance (miles)", start=1, end=25, value=10, step=1, width=360)
-    open_only_toggle = CheckboxGroup(labels=["Open locations only"], active=[])
-    eligibility_group = CheckboxGroup(
-        labels=["General Public", "Seniors", "Youth"],
-        active=[],
-    )
-    day_group = CheckboxGroup(
-        labels=["Monday", "Tuesday", "Wednesday", "Thursday", "Friday", "Saturday", "Sunday"],
-        active=[],
-    )
-
-    # Text input and search button for address input
-    address_input = TextInput(value="", title="Enter your address:")
-    search_button = Button(label="Search", button_type="primary")
-    clear_button = Button(label="Clear", button_type="default")
-
-    # Placeholder for results / location list
-    results_div = Div(text="", width=360)
-    location_list = Div(
-        text="<p style='color: #666;'>Loading list...</p>",
-        sizing_mode="stretch_width",
-        height=500,
-        styles={"overflow-y": "auto"})
-
-    sidebar_layout = column(
-        Div(
-            text="""
-            <div style='padding: 5px 0; font-size: 12px; font-weight: 700; text-transform: uppercase;
-            color: #57606a; letter-spacing: 0.5px;'>
-                Search & Filters
-            </div>""",
-            sizing_mode="stretch_width"
-        ),
-        Div(text="<div style='font-size:12px; font-weight:600; margin: 4px 0;'>"
-            "Food resource type</div>"),
-        resource_type_selector,
-        Div(text="<div style='font-size:12px; font-weight:600; margin: 8px 0 2px;'>"
-            "Distance from address</div>"),
-        distance_slider,
-        Div(text="<div style='font-size:12px; font-weight:600; margin: 8px 0 2px;'>"
-            "Operational status</div>"),
-        open_only_toggle,
-        Div(text="<div style='font-size:12px; font-weight:600; margin: 8px 0 2px;'>"
-            "Eligibility</div>"),
-        eligibility_group,
-        Div(text="<div style='font-size:12px; font-weight:600; margin: 8px 0 2px;'>"
-            "Available days</div>"),
-        day_group,
-        address_input,
-        row(search_button, clear_button, width=360),
-        results_div,
-        Div(
-            text="""
-            <hr style='border: 0; border-top: 1px solid #e1e4e8; margin: 15px 0;'>
-            <div style='font-size: 12px; font-weight: 700; text-transform: uppercase;
-            color: #57606a; letter-spacing: 0.5px; margin-bottom: 10px;'>
-                Nearby Food Banks
-            </div>""",
-            sizing_mode="stretch_width"
-        ),
-        location_list,
-        width=380,
-        sizing_mode="fixed"
+    filter_row = row(
+        column(_label("Resource type"), resource_type_selector),
+        _divider(),
+        column(_label("Eligibility"), eligibility_group),
+        _divider(),
+        column(_label("Available days"), day_group),
+        align="start",
+        styles={
+            "background": "#ffffff",
+            "border-bottom": "1px solid #e5e7eb",
+            "padding": "10px 20px",
+        },
     )
 
-    return sidebar_layout, {
+    return filter_row, {
         "resource_type_selector": resource_type_selector,
-        "distance_slider": distance_slider,
-        "open_only_toggle": open_only_toggle,
         "eligibility_group": eligibility_group,
         "day_group": day_group,
+    }
+
+
+def create_search_bar():
+    """Create the address search bar and results area above the map.
+
+    Returns:
+        tuple: (search_layout, search_widgets dict)
+    """
+    address_input = TextInput(
+        value="", placeholder="Enter your address...", sizing_mode="stretch_width"
+    )
+    search_button = Button(label="Search", button_type="primary")
+    clear_button = Button(label="Clear", button_type="default")
+    distance_slider = Slider(
+        title="Distance (miles)", start=1, end=25, value=10, step=1, width=200,
+    )
+    results_div = Div(text="", sizing_mode="stretch_width")
+
+    search_layout = column(
+        row(
+            address_input,
+            search_button,
+            clear_button,
+            _divider(),
+            distance_slider,
+            sizing_mode="stretch_width",
+        ),
+        results_div,
+        sizing_mode="stretch_width",
+        styles={"background": "#ffffff", "padding": "8px 12px"},
+    )
+
+    return search_layout, {
         "address_input": address_input,
         "search_button": search_button,
         "clear_button": clear_button,
+        "distance_slider": distance_slider,
         "results_div": results_div,
-        "location_list": location_list,
     }
 
-def create_analytics_panel():
-    """
-    Create the HTML for the analytics panel.
 
-    Returns:
-        str: HTML string for the analytics dashboard widgets.
-    """
-    return f"""
-    <div style="display: grid; grid-template-columns: repeat(4, 1fr); gap: 16px; margin-bottom: 24px;">
-        <div style="padding: 16px; background: white; border: 1px solid {COLORS['border']};
-        border-radius: 6px; border-left: 3px solid {COLORS['accent_blue']};">
-            <div style="color: {COLORS['text_tertiary']}; font-weight: 600; font-size: 11px;
-            text-transform: uppercase; letter-spacing: 0.5px; margin-bottom: 8px;">Total Locations</div>
-            <div style="font-size: 28px; font-weight: 600; color: {COLORS['text_primary']};
-            margin-bottom: 4px;">placeholder</div>
-            <div style="font-size: 12px; color: {COLORS['text_secondary']};">across Seattle</div>
-        </div>
+def create_nearby_panel():
+    """Create the fixed-width left panel showing nearby food bank cards."""
+    location_list = Div(
+        text=(
+            "<div style='padding:12px; color:#6a737d;'>"
+            "Apply filters or search an address to view nearby food banks."
+            "</div>"
+        ),
+        width=360,
+        sizing_mode="stretch_height",
+        styles={"overflow-y": "auto"},
+    )
 
-        <div style="padding: 16px; background: white; border: 1px solid {COLORS['border']};
-        border-radius: 6px; border-left: 3px solid {COLORS['accent_green']};">
-            <div style="color: {COLORS['text_tertiary']}; font-weight: 600; font-size: 11px;
-            text-transform: uppercase; letter-spacing: 0.5px; margin-bottom: 8px;">Transit Accessible</div>
-            <div style="font-size: 28px; font-weight: 600; color: {COLORS['text_primary']};
-            margin-bottom: 4px;">placeholder</div>
-            <div style="font-size: 12px; color: {COLORS['text_secondary']};">100% coverage</div>
-        </div>
+    panel = column(
+        Div(
+            text=(
+                "<div style='font-size:12px; font-weight:700; letter-spacing:0.5px; "
+                "color:#57606a; margin:4px 0 10px;'>NEARBY FOOD BANKS</div>"
+            )
+        ),
+        location_list,
+        width=380,
+        sizing_mode="stretch_height",
+        styles={"padding": "10px", "background": "#f8fafc",
+                "border-right": "1px solid #e5e7eb"},
+    )
 
-        <div style="padding: 16px; background: white; border: 1px solid {COLORS['border']};
-        border-radius: 6px; border-left: 3px solid {COLORS['accent_orange']};">
-            <div style="color: {COLORS['text_tertiary']}; font-weight: 600; font-size: 11px;
-            text-transform: uppercase; letter-spacing: 0.5px; margin-bottom: 8px;">Avg Accessibility</div>
-            <div style="font-size: 28px; font-weight: 600; color: {COLORS['text_primary']};
-            margin-bottom: 4px;">placeholder</div>
-            <div style="font-size: 12px; color: {COLORS['text_secondary']};">out of 100</div>
-        </div>
+    return panel, {"location_list": location_list}
 
-        <div style="padding: 16px; background: white; border: 1px solid {COLORS['border']};
-        border-radius: 6px; border-left: 3px solid {COLORS['accent_green']};">
-            <div style="color: {COLORS['text_tertiary']}; font-weight: 600; font-size: 11px;
-            text-transform: uppercase; letter-spacing: 0.5px; margin-bottom: 8px;">Weekly Reach</div>
-            <div style="font-size: 28px; font-weight: 600; color: {COLORS['text_primary']};
-            margin-bottom: 4px;">placeholder</div>
-            <div style="font-size: 12px; color: {COLORS['text_secondary']};">unique visitors</div>
-        </div>
-    </div>
-    """
 
-def create_header():
-    """
-    Create the header component with a Div.
+def _website_html(row_data):
+    website = row_data.get("Website")
+    website_str = "" if website is None else str(website).strip()
+    if not website_str or website_str.lower() in {"nan", "na", "n/a", "not available", ""}:
+        return ""
+    website_url = html.escape(website_str, quote=True)
+    return (
+        f"<div style='margin-top:2px;'>"
+        f"<a href='{website_url}' target='_blank' "
+        f"style='color:#0969da; font-size:13px;'>Visit website</a>"
+        f"</div>"
+    )
 
-    Returns:
-        Div: Bokeh Div component containing the header HTML.
-    """
-    header_div = Div(text=f"""
-        <div style="background: {COLORS['bg']}; border-bottom: 1px solid {COLORS['border']}; padding: 28px 40px;">
-            <div style="max-width: 1600px; margin: 0 auto;">
-                <div style="display: flex; justify-content: space-between; align-items: center;">
-                    <div>
-                        <h1 style="margin: 0 0 8px 0; font-size: 32px; font-weight: 600; color: {COLORS['text_primary']}; letter-spacing: -0.5px;">
-                            PantryMap
-                        </h1>
-                        <p style="margin: 0; font-size: 14px; color: {COLORS['text_secondary']}; font-weight: 400;">
-                            Food bank accessibility and public transit network
-                        </p>
-                    </div>
-                    <div style="text-align: right; font-size: 12px;">
-                        <div style="color: {COLORS['text_secondary']}; margin-bottom: 2px;">
-                            <span style="color: {COLORS['accent_green']}; font-weight: 600;">●</span> System Active
-                        </div>
-                        <div style="color: {COLORS['text_tertiary']};">Updated today at 18:30 UTC</div>
-                    </div>
+
+def _status_badge(row_data):
+    open_today = is_open_today(row_data.get("Days/Hours"))
+    if open_today is True:
+        return (
+            "<span style='background:#dafbe1; color:#1a7f37; padding:2px 7px; "
+            "border-radius:4px; font-size:10px; font-weight:700;'>Open Today</span>"
+        )
+    if open_today is False:
+        return (
+            "<span style='background:#ffebe9; color:#cf222e; padding:2px 7px; "
+            "border-radius:4px; font-size:10px; font-weight:700;'>Closed Today</span>"
+        )
+    return ""
+
+
+def format_nearby_foodbanks(foodbank_data):
+    """Format filtered food bank rows as HTML cards for the nearby panel."""
+    if foodbank_data is None or foodbank_data.empty:
+        return "<div style='padding:12px; color:#6a737d;'>No matching food banks found.</div>"
+
+    cards = []
+    show_distance = "distance" in foodbank_data.columns
+
+    for _, row_data in foodbank_data.head(12).iterrows():
+        agency = html.escape(str(row_data.get("Agency", "Unknown")), quote=True)
+        location = html.escape(str(row_data.get("Location", "")), quote=True)
+        address = html.escape(str(row_data.get("Address", "")), quote=True)
+        phone = row_data.get("Phone Number")
+        phone_str = "" if phone is None else str(phone).strip()
+        if not phone_str or phone_str.lower() in {"nan", "na", "n/a"}:
+            phone_display = "Not available"
+        else:
+            phone_display = html.escape(phone_str, quote=True)
+        resource_type = html.escape(str(row_data.get("Food Resource Type", "")), quote=True)
+        website_html = _website_html(row_data)
+        status_badge = _status_badge(row_data)
+
+        distance_html = ""
+        if show_distance:
+            distance_html = (
+                f"<div style='margin-top:8px; font-size:12px; color:#6a737d; font-weight:600;'>"
+                f"{row_data['distance']} miles away</div>"
+            )
+
+        cards.append(
+            f"""
+            <div style='padding:14px; border:1px solid #d8dee4; border-radius:10px;
+            margin-bottom:10px; background:white; box-shadow:0 1px 2px rgba(0,0,0,0.04);'>
+                <div style='display:flex; justify-content:space-between; gap:10px;
+                margin-bottom:6px;'>
+                    <div style='font-size:15px; font-weight:700; color:#24292f;
+                    line-height:1.3;'>{agency}</div>
+                    {status_badge}
+                </div>
+                <div style='font-size:13px; color:#57606a;'>
+                    <div>{location}</div>
+                    <div style='margin-top:2px;'>{address}</div>
+                    <div style='margin-top:2px;'>{phone_display}</div>
+                    {website_html}
+                    {distance_html}
+                </div>
+                <div style='margin-top:10px; padding-top:8px; border-top:1px solid #f0f2f4;'>
+                    <span style='background:#f1f8ff; color:#0969da; padding:3px 8px;
+                    border-radius:12px; font-size:10px; font-weight:700;'>{resource_type}</span>
                 </div>
             </div>
-        </div>
-        """, sizing_mode="stretch_width")
-    return header_div
+            """
+        )
 
-def create_layout(fig: LayoutDOM, sidebar: LayoutDOM) -> LayoutDOM:
-    """
-    Assemble the final application layout.
+    return "<div style='padding-right:6px;'>" + "".join(cards) + "</div>"
+
+
+def create_header():
+    """Create page header."""
+    header_content = Div(
+        text=(
+            "<div style='padding:8px 24px;display:flex;align-items:baseline;gap:10px;'>"
+            "<span style='font-size:20px;font-weight:700;color:#ffffff;"
+            "letter-spacing:-0.3px;'>PantryMap</span>"
+            "<span style='font-size:12px;color:#bfdbfe;font-weight:400;'>"
+            "Food bank accessibility and public transit network</span>"
+            "</div>"
+        ),
+        sizing_mode="stretch_width",
+        styles={"display": "block"},
+    )
+
+    return column(
+        header_content,
+        sizing_mode="stretch_width",
+        styles={
+            "background": "#0e4c92",
+            "border-bottom": "1px solid #1d4ed8",
+        },
+    )
+
+
+def create_layout(fig, filter_bar, search_bar, nearby_panel):
+    """Assemble the full application layout.
 
     Args:
-        fig (LayoutDOM): The main content component (e.g., map figure or placeholder Div).
-        sidebar (LayoutDOM): The sidebar layout component.
+        fig: The Bokeh map figure.
+        filter_bar: Layout from create_filter_bar().
+        search_bar: Layout from create_search_bar().
+        nearby_panel: Layout from create_nearby_panel().
 
     Returns:
-        LayoutDOM: The final assembled column layout.
+        LayoutDOM: The assembled page layout.
     """
-    analytics_div = Div(text=create_analytics_panel(), sizing_mode="stretch_width")
-    header_div = create_header()
-
-    # Use stretch_width and a fixed min_height to ensure it displays correctly
+    fig.styles = {"border-left": "1px solid #e5e7eb", "background": "#ffffff"}
+    map_column = column(search_bar, fig, sizing_mode="stretch_both")
     main_row = row(
-        sidebar,
-        fig,
-        sizing_mode="stretch_width",
-        min_height=600
+        nearby_panel,
+        map_column,
+        sizing_mode="stretch_both",
+        min_height=600,
+    )
+    return column(
+        create_header(),
+        filter_bar,
+        main_row,
+        sizing_mode="stretch_both",
+        styles={"background": "#ffffff"},
     )
 
-    final_layout = column(
-        header_div,
-        analytics_div,
-        main_row,
-        sizing_mode="stretch_width"
-    )
-    return final_layout
+
+def create_sidebar(foodbank_df=None):
+    """Deprecated. Use create_filter_bar() directly."""
+    del foodbank_df
+    return column(), {}
+
+
+def format_foodbank_list(foodbank_data):
+    """Backward-compatible alias for existing call sites."""
+    return format_nearby_foodbanks(foodbank_data)
