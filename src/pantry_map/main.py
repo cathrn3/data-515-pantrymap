@@ -18,7 +18,8 @@ sys.path.append(os.path.join(PROJECT_ROOT, "src"))
 from bokeh.io import curdoc
 
 from bokeh.models import ColumnDataSource, CDSView, BooleanFilter
-from pantry_map.data.loader import get_foodbank_df, get_transit_df, get_shapes_df
+#from pantry_map.data.loader import get_foodbank_df, get_transit_df, get_shapes_df
+from pantry_map.data.loader import get_foodbank_df, get_shapes_df
 from pantry_map.components.map import add_markers, add_routes, create_map
 from pantry_map.components.layout import (
     create_filter_bar,
@@ -87,7 +88,8 @@ def _safe_calculate_distance(user_lat, user_lon, row_lat, row_lon):
 
     try:
         return calculate_distance(lat1, lon1, lat2, lon2)
-    except Exception:
+    #except Exception:
+    except (TypeError, ValueError, OverflowError):
         # If calculate_distance itself fails for any reason, treat distance as infinite
         return np.inf
 
