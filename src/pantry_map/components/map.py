@@ -57,7 +57,7 @@ def create_map(foodbank_df):
         y_axis_type="mercator",
         width=1000,
         height=550,
-        tools="pan,wheel_zoom,box_zoom,reset,save",
+        tools="pan,wheel_zoom,box_zoom,reset,save,tap",
         active_scroll="wheel_zoom",
         toolbar_location="above",
         background_fill_color="#fafbfc",
@@ -69,25 +69,120 @@ def create_map(foodbank_df):
     return fig
 
 
-def add_markers(fig, source, view=None):
-    """Add food bank markers."""
-    return fig.circle(
+def add_markers(fig, user_source, foodbank_highlight_source, foodbank_source, foodbank_view=None):
+    """Add food bank, highlight, and user location markers to the map figure.
+
+    Args:
+        fig (figure): The Bokeh figure to add markers to.
+        user_source (ColumnDataSource): Data source for the user location marker.
+        foodbank_highlight_source (ColumnDataSource): Data source for highlighted foodbank markers.
+        foodbank_source (ColumnDataSource): Data source for all foodbank markers.
+        foodbank_view (CDSView, optional): A view to filter the foodbank data source.
+
+    Returns:
+        GlyphRenderer: The foodbank marker glyph renderer (used for TapTool targeting).
+    """
+    fig.circle(
+        x="x",
+        y="y",
+        size=15,
+        color="blue",
+        fill_color="white",
+        source=foodbank_highlight_source,
+    )
+
+    foodbank_markers = fig.circle(
         x="x",
         y="y",
         size=10,
         alpha=0.85,
-        source=source,
+        source=foodbank_source,
         line_width=2,
-        view=view,
+        view=foodbank_view,
     )
 
+    fig.circle(
+        x="x",
+        y="y",
+        size=15,
+        color="red",
+        source=user_source,
+    )
 
-def add_routes(fig, source):
-    """Add transit route polylines."""
-    return fig.multi_line(
+    return foodbank_markers
+
+
+def add_routes(fig, grouped_shapes_source, route_source):
+    """Add transit route polylines and calculated-route overlay to the map figure.
+
+    Args:
+        fig (figure): The Bokeh figure to add routes to.
+        grouped_shapes_source (ColumnDataSource): Data source for transit shape routes.
+        route_source (ColumnDataSource): Data source for the active calculated route.
+    """
+    fig.multi_line(
         xs="x",
         ys="y",
         color="color",
-        source=source,
+        source=grouped_shapes_source,
         line_width=2,
+        alpha=0.25,
     )
+
+    fig.multi_line(
+        xs="xs",
+        ys="ys",
+        line_color="color",
+        line_width=5,
+        source=route_source,
+    )
+
+
+def update_route(route, foodbank_loc, shapes_df, foodbank_highlight_source, route_source):
+    """Update the highlighted food bank marker and draw the transit route.
+
+    Args:
+        route (list): List of stop/node keys along the route.
+        foodbank_loc (tuple): (x, y) Mercator coordinates of the destination food bank.
+        shapes_df (pd.DataFrame): Full transit shapes dataframe for segment lookup.
+        foodbank_highlight_source (ColumnDataSource): Data source for highlighted foodbank marker.
+        route_source (ColumnDataSource): Data source for the drawn route polylines.
+    """
+    foodbank_highlight_source.data = {
+        "x": [foodbank_loc[0]],
+        "y": [foodbank_loc[1]],
+    }
+
+    if not route:
+        route_source.data = {"xs": [], "ys": [], "color": []}
+        return
+
+    highlight_df = shapes_df[shapes_df["unique_key"].isin(route[1:-1])]
+    grouped = highlight_df.groupby("route_id")
+
+    xs = []
+    ys = []
+    colors = []
+
+    for _, group in grouped:
+        start_idx = group.index.min()
+        end_idx = group.index.max()
+        segment = shapes_df.loc[start_idx:end_idx]
+        xs.append(segment["x"].tolist())
+        ys.append(segment["y"].tolist())
+        colors.append(segment["color"].iloc[0])
+
+    route_source.data = {"xs": xs, "ys": ys, "color": colors}
+
+
+def clear_routes(foodbank_highlight_source, foodbank_source, route_source):
+    """Clear the highlighted food bank marker and any drawn route.
+
+    Args:
+        foodbank_highlight_source (ColumnDataSource): Data source for highlighted foodbank marker.
+        foodbank_source (ColumnDataSource): Data source for all foodbank markers.
+        route_source (ColumnDataSource): Data source for the drawn route polylines.
+    """
+    foodbank_highlight_source.data = {"x": [], "y": []}
+    foodbank_source.selected.indices = []
+    route_source.data = {"xs": [], "ys": [], "color": []}

@@ -16,10 +16,10 @@ sys.path.append(os.path.join(PROJECT_ROOT, "src"))
 
 # pylint: disable=wrong-import-position
 from bokeh.io import curdoc
+from bokeh.models import ColumnDataSource, CDSView, BooleanFilter, TapTool
 
-from bokeh.models import ColumnDataSource, CDSView, BooleanFilter
-from pantry_map.data.loader import get_foodbank_df, get_transit_df, get_shapes_df
-from pantry_map.components.map import add_markers, add_routes, create_map
+from pantry_map.data.loader import get_foodbank_df, get_transit_df, get_shapes_df, get_transfers_df
+from pantry_map.components.map import add_markers, add_routes, create_map, update_route, clear_routes
 from pantry_map.components.layout import (
     create_filter_bar,
     create_nearby_panel,
@@ -27,24 +27,41 @@ from pantry_map.components.layout import (
     format_nearby_foodbanks,
 )
 from pantry_map.filters.mask import get_foodbank_mask
+from pantry_map.services.route import CalculateRoute
 from pantry_map.utilities.utility import (
     calculate_distance,
     validate_address,
     geocode_address,
+    lat_lon_to_mercator,
 )
 
 # 1. Load Data
-transit_shapes_df = get_shapes_df()
-transit_source = ColumnDataSource(transit_shapes_df)
+shapes_df, grouped_shapes_df = get_shapes_df()
+grouped_shapes_source = ColumnDataSource(grouped_shapes_df)
+
+transit_df = get_transit_df()
+transfers_df = get_transfers_df()
 
 foodbank_df = get_foodbank_df()
 foodbank_initial_mask = [True] * len(foodbank_df)
 foodbank_source = ColumnDataSource(foodbank_df)
 foodbank_view = CDSView(filter=BooleanFilter(foodbank_initial_mask))
 
+# Initialize drawn sources for user location, food bank highlight, and calculated route
+user_source = ColumnDataSource({"x": [], "y": []})
+foodbank_highlight_source = ColumnDataSource({"x": [], "y": []})
+route_source = ColumnDataSource({"xs": [], "ys": [], "color": []})
+
+route_planner = CalculateRoute(foodbank_df, transit_df, transfers_df)
+
 map_fig = create_map(foodbank_df)
-add_routes(map_fig, transit_source)
-add_markers(map_fig, foodbank_source, view=foodbank_view)
+add_routes(map_fig, grouped_shapes_source, route_source)
+foodbank_markers = add_markers(
+    map_fig, user_source, foodbank_highlight_source, foodbank_source, foodbank_view=foodbank_view
+)
+taptool = map_fig.select_one(TapTool)
+if taptool is not None:
+    taptool.renderers = [foodbank_markers]
 
 filter_bar, filter_widgets = create_filter_bar()
 nearby_panel, nearby_widgets = create_nearby_panel()
@@ -163,6 +180,11 @@ def update():
 
     nearby_widgets["location_list"].text = format_nearby_foodbanks(filtered_df)
 
+    # Clear highlight and route if the selected food bank is no longer visible
+    selected = foodbank_source.selected.indices
+    if len(selected) > 0 and not combined_mask.iloc[selected[0]]:
+        clear_routes(foodbank_highlight_source, foodbank_source, route_source)
+
 def on_search_click():
     """Handle click event for the search button.
 
@@ -187,8 +209,13 @@ def on_search_click():
         )
         return
 
+    clear_routes(foodbank_highlight_source, foodbank_source, route_source)
+    user_x, user_y = lat_lon_to_mercator(lat, lon)
+    user_source.data = {"x": [user_x], "y": [user_y]}
+
     user_location["lat"] = lat
     user_location["lon"] = lon
+    route_planner.set_user_location((lat, lon))
     update()
 
     filter_widgets["results_div"].text = (
@@ -223,6 +250,39 @@ def on_clear_click():
     # Clear results message
     filter_widgets["results_div"].text = ""
 
+    # Clear rendered routes and user marker
+    route_planner.set_user_location(None)
+    user_source.data = {"x": [], "y": []}
+    clear_routes(foodbank_highlight_source, foodbank_source, route_source)
+
+
+def marker_callback(attr, old, new):
+    """Handle tap selection on a food bank marker."""
+    del attr, old
+    if not new:
+        clear_routes(foodbank_highlight_source, foodbank_source, route_source)
+        nearby_widgets["location_list"].text = format_nearby_foodbanks(
+            foodbank_df[foodbank_view.filter.booleans]
+        )
+        return
+
+    # Route to the first selected marker; show all selected in the sidebar
+    idx = new[0]
+    foodbank_loc = (
+        foodbank_source.data["x"][idx],
+        foodbank_source.data["y"][idx],
+    )
+    foodbank_id = foodbank_source.data["bank_id"][idx]
+    est_time, route = route_planner.get_route_to_destination(foodbank_id)
+    if est_time is not None:
+        filter_widgets["results_div"].text = (
+            f"<p style='color:#0969da'>Estimated travel time: {est_time:.1f} min</p>"
+        )
+    update_route(route, foodbank_loc, shapes_df, foodbank_highlight_source, route_source)
+
+    selected_rows = foodbank_df.iloc[new]
+    nearby_widgets["location_list"].text = format_nearby_foodbanks(selected_rows)
+
 
 # 4. Wire up callbacks
 resource_type_selector.on_change("active", lambda attr, old, new: update())
@@ -233,6 +293,7 @@ day_group.on_change("active", lambda attr, old, new: update())
 address_input.on_change("value", on_address_change)
 search_button.on_click(on_search_click)
 clear_button.on_click(on_clear_click)
+foodbank_source.selected.on_change("indices", marker_callback)  # pylint: disable=no-member
 update()
 
 layout = create_layout(map_fig, filter_bar, nearby_panel)

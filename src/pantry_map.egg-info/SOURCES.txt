@@ -17,6 +17,7 @@ src/pantry_map/components/layout.py
 src/pantry_map/components/map.py
 src/pantry_map/data/loader.py
 src/pantry_map/filters/mask.py
+src/pantry_map/services/route.py
 src/pantry_map/utilities/constants.py
 src/pantry_map/utilities/utility.py
 tests/test_distance.py
