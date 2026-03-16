@@ -28,6 +28,7 @@ from pantry_map.components.layout import (
     create_nearby_panel,
     create_layout,
     format_nearby_foodbanks,
+    format_route_display,
 )
 from pantry_map.filters.mask import get_foodbank_mask
 from pantry_map.utilities.utility import (
@@ -89,10 +90,6 @@ search_button = search_widgets['search_button']
 clear_button = search_widgets['clear_button']
 
 user_location = {"lat": None, "lon": None}
-
-
-def _selected_labels(checkbox_group):
-    return [checkbox_group.labels[idx] for idx in checkbox_group.active]
 
 
 def _safe_calculate_distance(user_lat, user_lon, row_lat, row_lon):
@@ -266,9 +263,22 @@ def marker_callback(attr, old, new):
         foodbank_source.data["y"][idx]
     )
     foodbank_id = foodbank_source.data["bank_id"][idx]
-    _, route = route_planner.get_route_to_destination(foodbank_id)
+    est_time, route, legs = route_planner.get_route_to_destination(foodbank_id)
 
     update_route(route, foodbank_loc, shapes_df, foodbank_highlight_source, route_source)
+
+    destination_name = foodbank_source.data["Agency"][idx]
+    if est_time is not None:
+        search_widgets["results_div"].text = format_route_display(
+            legs, round(est_time), destination_name
+        )
+    elif user_location["lat"] is not None:
+        search_widgets["results_div"].text = (
+            "<p style='color:#6a737d; font-size:13px; margin:4px 0;'>"
+            "No transit route found to this location.</p>"
+        )
+    else:
+        search_widgets["results_div"].text = ""
 
     selected_rows = foodbank_df.iloc[new]
     nearby_widgets["location_list"].text = format_nearby_foodbanks(selected_rows)

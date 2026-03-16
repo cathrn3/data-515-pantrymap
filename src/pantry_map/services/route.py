@@ -4,6 +4,7 @@ and a food bank via public transportation
 """
 
 import logging
+from itertools import groupby
 
 import networkx as nx
 import numpy as np
@@ -137,24 +138,67 @@ class CalculateRoute:  # pylint: disable=too-many-instance-attributes
             new_graph.add_edge(stop_id, food_bank_id, weight=estimated_time)
         return new_graph
 
+    def _build_legs(self, route):
+        """Reconstruct leg sequence from a node path returned by Dijkstra.
+
+        Each edge is classified as "walk" (USER node or food bank destination)
+        or a route short name (looked up via unique_key in transit_df).
+        Consecutive edges with the same short name are merged into one bus leg.
+
+        Args:
+            route (list[str]): Ordered list of node IDs from USER to food bank.
+
+        Returns:
+            list[dict]: Leg dicts — {"type": "walk"} or
+                        {"type": "bus", "short_name": str, "color": str}
+        """
+        food_bank_ids = set(self.food_bank_df["bank_id"].values)
+
+        # Classify each edge as "walk" or a (short_name, row) tuple
+        classified = []
+        for node_a, node_b in zip(route, route[1:]):
+            if node_a == "USER" or node_b in food_bank_ids:
+                classified.append(("walk", None))
+            else:
+                row = self.transit_df.loc[
+                    self.transit_df["unique_key"] == node_a
+                ].iloc[0]
+                classified.append((row["route_short_name"], row))
+
+        # Group consecutive same-label edges into legs
+        legs = []
+        for short_name, group in groupby(classified, key=lambda x: x[0]):
+            if short_name == "walk":
+                legs.append({"type": "walk"})
+            else:
+                _, first_row = next(group)
+                legs.append({
+                    "type": "bus",
+                    "short_name": short_name,
+                    "color": first_row["color"],
+                })
+
+        return legs
+
     def get_route_to_destination(self, food_bank_id: str):
-        """Return the shortest path and estimated travel time to the given food bank."""
+        """Return the shortest path, estimated travel time, and leg list to the given food bank."""
         try:
             if self.user_location is None:
-                return None, None
+                return None, None, None
             new_graph = self._get_nearby_nodes_to_food_bank(food_bank_id)
             time, route = nx.single_source_dijkstra(
                 new_graph, 'USER', food_bank_id, weight='weight'
             )
-            return time, route
+            legs = self._build_legs(route)
+            return time, route, legs
         except (nx.NetworkXNoPath, nx.NodeNotFound):
-            return None, None
+            return None, None, None
         except ValueError:
-            # Handle unknown food bank IDs without logging as an unexpected error
-            return None, None
+            # Handle unknown food bank IDs
+            return None, None, None
         except Exception:  # pylint: disable=broad-exception-caught
             logging.exception(
                 "Unexpected error occurred while finding route to food bank %s",
                 food_bank_id,
             )
-            return None, None
+            return None, None, None
