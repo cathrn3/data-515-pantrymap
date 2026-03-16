@@ -14,6 +14,7 @@ from bokeh.layouts import column, row
 from bokeh.models import (
     Div, TextInput, Button, Slider, RadioButtonGroup, MultiChoice
 )
+import re
 
 def is_open_today(hours_str):
     """
@@ -276,6 +277,26 @@ def _chip(content, bg_color, text_color="#ffffff", extra_style=""):
 _ARROW = "<span style='color:#6a737d; font-size:12px; padding:0 4px;'>&#x2192;</span>"
 
 
+_HEX_COLOR_RE = re.compile(r"^#([0-9a-f]{3}|[0-9a-f]{6})$", re.IGNORECASE)
+
+
+def _normalize_hex_color(value, default="#374151"):
+    """
+    Normalize a CSS hex color value.
+
+    Accepts #RGB or #RRGGBB; returns `default` if the value is missing or invalid.
+    """
+    if not isinstance(value, str):
+        return default
+    value = value.strip()
+    if not value:
+        return default
+    if not _HEX_COLOR_RE.match(value):
+        return default
+    # Normalize to lowercase for consistency
+    return value.lower()
+
+
 def format_route_display(legs, total_minutes, destination_name):
     """Format a route leg list as an HTML horizontal chip timeline for results_div.
 
@@ -312,7 +333,8 @@ def format_route_display(legs, total_minutes, destination_name):
         if leg_type == "walk":
             chips.append(_chip("Walk", "#f0f0f0", text_color="#24292f"))
         elif leg_type == "bus":
-            color = leg.get("color", "#374151")
+            raw_color = leg.get("color")
+            color = _normalize_hex_color(raw_color, default="#374151")
             short = html.escape(str(leg["short_name"]), quote=True)
             chips.append(_chip(short, color))
 
