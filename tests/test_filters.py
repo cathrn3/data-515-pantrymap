@@ -27,9 +27,9 @@ class TestFoodbankFilters(unittest.TestCase):
             }
         )
 
-    def test_resource_type_food_bank_includes_combo(self):
+    def test_resource_type_food_bank_excludes_combo(self):
         mask = get_foodbank_mask(self.df, resource_type="Food Bank")
-        self.assertEqual(mask.tolist(), [True, False, True, False])
+        self.assertEqual(mask.tolist(), [True, False, False, False])
 
     def test_resource_type_meal_excludes_combo(self):
         mask = get_foodbank_mask(self.df, resource_type="Meal")

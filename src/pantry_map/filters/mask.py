@@ -13,7 +13,7 @@ def _resource_type_mask(foodbank_df, resource_type):
     )
 
     if resource_type == "Food Bank":
-        return resource_series.str.contains("food bank", regex=False)
+        return resource_series.eq("food bank")
     if resource_type == "Meal":
         return resource_series.eq("meal")
     return np.ones(len(foodbank_df), dtype=bool)
