@@ -157,7 +157,12 @@ class CalculateRoute:  # pylint: disable=too-many-instance-attributes
         # Classify each edge as "walk" or a (short_name, row) tuple
         classified = []
         for node_a, node_b in zip(route, route[1:]):
-            if node_a == "USER" or node_b in food_bank_ids:
+            if (
+                node_a == "USER"
+                or node_b == "USER"
+                or node_a in food_bank_ids
+                or node_b in food_bank_ids
+            ):
                 classified.append(("walk", None))
             else:
                 row = self.transit_df.loc[
