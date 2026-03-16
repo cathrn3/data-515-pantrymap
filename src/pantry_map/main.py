@@ -82,7 +82,6 @@ nearby_panel, nearby_widgets = create_nearby_panel()
 
 resource_type_selector = filter_widgets['resource_type_selector']
 distance_slider = search_widgets['distance_slider']
-open_only_toggle = filter_widgets['open_only_toggle']
 eligibility_group = filter_widgets['eligibility_group']
 day_group = filter_widgets['day_group']
 address_input = search_widgets['address_input']
@@ -131,14 +130,14 @@ def update():
         resource_type = "Both" if "Both" in labels else (labels[0] if labels else None)
     else:
         resource_type = labels[int(active)]
-    open_only = bool(open_only_toggle.active)
+
     selected_eligibility = list(eligibility_group.value)
     selected_days = list(day_group.value)
 
     foodbank_mask = get_foodbank_mask(
         foodbank_df,
         resource_type=resource_type,
-        open_only=open_only,
+        open_only=False,
         selected_eligibility=selected_eligibility,
         selected_days=selected_days,
         user_lat=None,
@@ -255,9 +254,8 @@ def marker_callback(attr, old, new):
     del attr, old
     if not new:
         clear_routes(foodbank_highlight_source, foodbank_source, route_source)
-        nearby_widgets["location_list"].text = format_nearby_foodbanks(
-            foodbank_df[foodbank_view.filter.booleans].head(20)
-        )
+        search_widgets["results_div"].text = ""
+        update()
         return
 
     # Route to the first selected marker; show all selected in the sidebar
@@ -279,7 +277,7 @@ def marker_callback(attr, old, new):
 # 5. Wire up callbacks
 resource_type_selector.on_change("active", lambda attr, old, new: update())
 distance_slider.on_change("value", lambda attr, old, new: update())
-open_only_toggle.on_change("active", lambda attr, old, new: update())
+
 eligibility_group.on_change("value", lambda attr, old, new: update())
 day_group.on_change("value", lambda attr, old, new: update())
 address_input.on_change("value", on_address_change)

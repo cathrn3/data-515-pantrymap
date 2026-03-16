@@ -7,10 +7,45 @@ for formatting food bank and route information in HTML.
 """
 
 import html
-from bokeh.layouts import column, row, Spacer
+import pandas as pd
+from datetime import datetime
+from bokeh.layouts import column, row
 from bokeh.models import (
-    Div, TextInput, Button, Toggle, Slider, RadioButtonGroup, MultiChoice
+    Div, TextInput, Button, Slider, RadioButtonGroup, MultiChoice
 )
+
+def is_open_today(hours_str):
+    """
+    Check if today's day is mentioned in the hours string.
+
+    Args:
+        hours_str (str): The opening hours string from the dataset.
+
+    Returns:
+        bool or None: True if open today, False if closed, None if data is missing.
+    """
+    if pd.isna(hours_str) or not hours_str:
+        return None
+
+    days = ["monday", "tuesday", "wednesday", "thursday", "friday", "saturday", "sunday"]
+    short_days = ["mon", "tue", "wed", "thu", "fri", "sat", "sun"]
+
+    today_idx = datetime.now().weekday()
+    today_full = days[today_idx]
+    today_short = short_days[today_idx]
+
+    hours_lower = str(hours_str).lower()
+
+    # Check for ranges like "Monday-Friday"
+    if any(range_str in hours_lower for range_str in ["monday-friday", "mon-fri", "mon - fri"]):
+        if today_idx <= 4:
+            return True
+
+    # Check for specific day mentions or "Daily"
+    if today_full in hours_lower or today_short in hours_lower or "daily" in hours_lower:
+        return True
+
+    return False
 
 
 def _label(text):
@@ -28,7 +63,7 @@ def _divider():
         text="",
         width=2,
         styles={"border-left": "1px solid #e5e7eb", "align-self": "stretch",
-                "margin": "0 8px"},
+                "margin": "0 20px"},
     )
 
 
@@ -39,11 +74,10 @@ def create_filter_bar():
         active=0,
         width=230,
     )
-    open_only_toggle = Toggle(label="Open now", active=False, button_type="default")
     eligibility_group = MultiChoice(
         options=["General Public", "Seniors", "Youth"],
         value=[],
-        width=380,
+        width=280,
     )
     day_group = MultiChoice(
         options=["Monday", "Tuesday", "Wednesday", "Thursday",
@@ -55,19 +89,10 @@ def create_filter_bar():
 
     filter_row = row(
         column(_label("Resource type"), resource_type_selector),
-        Spacer(sizing_mode="stretch_width"),
         _divider(),
-        Spacer(sizing_mode="stretch_width"),
-        column(_label("Status"), open_only_toggle),
-        Spacer(sizing_mode="stretch_width"),
-        _divider(),
-        Spacer(sizing_mode="stretch_width"),
         column(_label("Eligibility"), eligibility_group),
-        Spacer(sizing_mode="stretch_width"),
         _divider(),
-        Spacer(sizing_mode="stretch_width"),
         column(_label("Available days"), day_group),
-        sizing_mode="stretch_width",
         align="start",
         styles={
             "background": "#ffffff",
@@ -78,7 +103,6 @@ def create_filter_bar():
 
     return filter_row, {
         "resource_type_selector": resource_type_selector,
-        "open_only_toggle": open_only_toggle,
         "eligibility_group": eligibility_group,
         "day_group": day_group,
     }
@@ -96,7 +120,7 @@ def create_search_bar():
     search_button = Button(label="Search", button_type="primary")
     clear_button = Button(label="Clear", button_type="default")
     distance_slider = Slider(
-        title="Distance (miles)", start=1, end=25, value=10, step=1, width=200
+        title="Distance (miles)", start=1, end=25, value=10, step=1, width=200,
     )
     results_div = Div(text="", sizing_mode="stretch_width")
 
@@ -173,20 +197,32 @@ def format_nearby_foodbanks(foodbank_data):
             phone_display = html.escape(phone_str, quote=True)
         resource_type = html.escape(str(row_data.get("Food Resource Type", "")), quote=True)
 
-        raw_status = row_data.get("Operational Status")
-        status = str(raw_status).strip().lower() if raw_status is not None else ""
-        if not status or status in {"nan", "na", "n/a", "unknown"}:
-            status_badge = ""
-        elif status == "open":
+        website = row_data.get("Website")
+        website_str = "" if website is None else str(website).strip()
+        if not website_str or website_str.lower() in {"nan", "na", "n/a", "not available", ""}:
+            website_html = ""
+        else:
+            website_url = html.escape(website_str, quote=True)
+            website_html = (
+                f"<div style='margin-top:2px;'>"
+                f"<a href='{website_url}' target='_blank' "
+                f"style='color:#0969da; font-size:13px;'>Visit website</a>"
+                f"</div>"
+            )
+
+        open_today = is_open_today(row_data.get("Days/Hours"))
+        if open_today is True:
             status_badge = (
                 "<span style='background:#dafbe1; color:#1a7f37; padding:2px 7px; "
-                "border-radius:4px; font-size:10px; font-weight:700;'>OPEN</span>"
+                "border-radius:4px; font-size:10px; font-weight:700;'>Open Today</span>"
             )
-        else:
+        elif open_today is False:
             status_badge = (
                 "<span style='background:#ffebe9; color:#cf222e; padding:2px 7px; "
-                "border-radius:4px; font-size:10px; font-weight:700;'>CLOSED</span>"
+                "border-radius:4px; font-size:10px; font-weight:700;'>Closed Today</span>"
             )
+        else:
+            status_badge = ""
 
         distance_html = ""
         if show_distance:
@@ -209,6 +245,7 @@ def format_nearby_foodbanks(foodbank_data):
                     <div>{location}</div>
                     <div style='margin-top:2px;'>{address}</div>
                     <div style='margin-top:2px;'>{phone_display}</div>
+                    {website_html}
                     {distance_html}
                 </div>
                 <div style='margin-top:10px; padding-top:8px; border-top:1px solid #f0f2f4;'>
@@ -241,8 +278,8 @@ def create_header():
         header_content,
         sizing_mode="stretch_width",
         styles={
-            "background": "#1e40af",
-            "border-bottom": "1px solid #1e3a8a",
+            "background": "#0e4c92",
+            "border-bottom": "1px solid #1d4ed8",
         },
     )
 
