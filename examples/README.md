@@ -110,8 +110,8 @@ Click on a food bank marker within the search range.
 
 Once selected:
 
-* The map highlights **only your location and the selected food bank**.
-* The **best public transit route** between the two locations is displayed on the map.
+* The map highlights your location and the selected food bank, while other nearby locations may remain visible.
+* The **best public transit route** between your location and the selected food bank is displayed on the map.
 * The sidebar updates to show detailed information about the selected location.
 
 Information shown includes:
