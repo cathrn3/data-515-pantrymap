@@ -196,10 +196,9 @@ def create_header():
             <h1 style="margin: 0 0 8px 0; font-size: 32px; font-weight: 600; color: {COLORS['text_primary']}; letter-spacing: -0.5px; text-align:center;">
                 PantryMap
             </h1>
-            <p style="margin: 0; font-size: 14px; color: {COLORS['text_secondary']}; font-weight: 400; text-align:center;">
+            <p style="margin: 0; font-size: 16px; color: {COLORS['text_secondary']}; font-weight: 400; text-align:center;">
                 Food bank accessibility and public transit network
             </p>
-            <p style="margin:6px 0 0; font-size:12px; color: {COLORS['text_tertiary']}; text-align:center;">Updated today</p>
         </div>
         """,
         width=620,
