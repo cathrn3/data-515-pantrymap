@@ -1,29 +1,27 @@
 # Examples
 
-This document demonstrates how users interact with **PantryMap**, a web application that helps users locate nearby food banks and meal services in Seattle.
+This document demonstrates how to use **PantryMap** to locate nearby food banks and meal services. The examples below walk through common tasks a user might perform when interacting with the application.
 
-The examples below walk through common user workflows and show how the system responds to user actions. Screenshots illustrate the interface at each step.
+Each example provides step-by-step instructions along with screenshots illustrating the interface.
 
----
+## Examples in this Guide
 
-# Example 1: Browsing Food Banks and Applying Filters
-
-## Objective
-
-The user wants to browse operational food banks and meal services and filter the results based on their needs.
+1. Browsing and filtering food banks
+2. Finding food banks near an address
 
 ---
 
-## Step 1: Open the Application
+# Example 1: Browsing and Filtering Food Banks
 
-The user opens the PantryMap web application.
+---
 
-**System behavior**
+## Step 1: Open the PantryMap Application
 
-* An interactive map loads.
-* All currently operational food banks and meal programs are displayed as markers on the map.
+When you open PantryMap, an interactive map will appear displaying food banks and meal programs across the Seattle area.
 
-**Figure 1: Initial map showing all food bank and meal locations**
+Each location is represented by a marker on the map. At this stage, all available locations are visible.
+
+**Figure 1: Initial map view showing all locations**
 
 ![Initial Map View](images/example_map_all_locations.png)
 
@@ -31,18 +29,19 @@ The user opens the PantryMap web application.
 
 ## Step 2: Apply Filters
 
-The user applies filters to narrow the results. Available filters include:
+You can narrow the displayed results using the filter options.
 
-* **Type of service** (food bank or meal program)
-* **Operating hours**
-* **Service requirements**
+The available filters include:
 
-**System behavior**
+* **Type of service** – Food bank, meal program, or both
+* **Eligibility** – Seniors, youth, or general public
+* **Available days** – Days of the week when the location is operational
 
-* The map automatically updates.
-* Only locations matching the selected filters remain visible.
+Select one or more filter options based on your needs.
 
-**Figure 2: Map after filters are applied**
+Once filters are applied, the map will automatically update to show only locations that match the selected criteria.
+
+**Figure 2: Map after applying filters**
 
 ![Filtered Map View](images/example_filtered_map.png)
 
@@ -50,16 +49,17 @@ The user applies filters to narrow the results. Available filters include:
 
 ## Step 3: Select a Location
 
-The user clicks on a location marker on the map.
+Click on a marker on the map to learn more about that location.
 
-**System behavior**
-
-A detail panel appears containing:
+A panel will appear displaying additional details, including:
 
 * Location name
 * Address
 * Hours of operation
-* Type of services offered
+* Type of services provided
+* Eligibility information
+
+This allows you to quickly determine whether the location meets your needs.
 
 **Figure 3: Location details displayed**
 
@@ -67,92 +67,74 @@ A detail panel appears containing:
 
 ---
 
-## Step 4: View Public Transportation Routes
-
-After selecting a location, the system displays available public transportation routes.
-
-**System behavior**
-
-* Nearby transit routes are shown on the map.
-* The user can visually see how to reach the location using public transportation.
-
-**Figure 4: Transit routes to selected location**
-
-![Transit Routes](images/example_transit_routes.png)
+# Example 2: Finding Food Banks Near an Address
 
 ---
 
-# Example 2: Finding the Closest Food Banks
+## Step 1: Enter Your Address
 
-## Objective
+Locate the search bar and type in an address.
 
-The user wants to find the food banks and meal services closest to their current location.
-
----
-
-## Step 1: Enter a Location
-
-The user enters an address into the search bar.
-
-Example input:
+Example:
 
 `1234 Pike St, Seattle WA`
 
-**System behavior**
+Once you submit the address:
 
-* The map centers on the entered location.
+* A **red marker** appears on the map showing the entered location.
+* The map will display nearby food banks and meal programs within the current distance range.
 
-**Figure 5: Map centered on user location**
+**Figure 4: User address highlighted on the map**
 
-![User Location](images/example_user_location.png)
+![User Address](images/example_user_location.png)
 
 ---
 
-## Step 2: Display Closest Locations
+## Step 2: Adjust the Distance Range
 
-The system identifies the closest food banks and meal services.
+PantryMap includes a **distance slider** that controls how far from your location the search should extend.
 
-**System behavior**
+By default, the distance is set to **10 miles**.
 
-* The **five closest locations** are highlighted on the map.
-* A list of these locations appears beside the map.
+You can adjust the slider to expand or reduce the search area. As you move the slider, the map updates to display all food banks and meal programs within the selected range.
 
-Each result includes:
+**Figure 5: Adjusting the distance slider**
 
-* Location name
+![Distance Slider](images/example_distance_slider.png)
+
+---
+
+## Step 3: Select a Food Bank
+
+Click on a food bank marker within the search range.
+
+Once selected:
+
+* The map highlights **only your location and the selected food bank**.
+* The **best public transit route** between the two locations is displayed on the map.
+* The sidebar updates to show detailed information about the selected location.
+
+Information shown includes:
+
 * Address
-* Distance from the user
-
-**Figure 6: Closest locations highlighted**
-
-![Closest Locations](images/example_closest_locations.png)
-
----
-
-## Step 3: Select a Location
-
-The user selects one of the suggested locations from the list or clicks the marker on the map.
-
-**System behavior**
-
-Additional information about the location is displayed, including:
-
-* Full address
+* Service type
 * Hours of operation
-* Type of service provided
-* Public transportation routes to the location
+* Eligibility requirements
 
-**Figure 7: Detailed location information**
+**Figure 6: Transit route and location details**
 
-![Detailed Location Info](images/example_detailed_location.png)
+![Transit Route](images/example_transit_route.png)
 
 ---
 
 # Summary
 
-These examples demonstrate two common ways users interact with PantryMap:
+Using PantryMap, you can:
 
-1. **Browsing and filtering food banks**
-2. **Finding the closest food banks based on a user's location**
+* Browse all available food banks and meal programs
+* Apply filters to find services that meet your needs
+* Search for locations near a specific address
+* Adjust the search distance using a slider
+* View detailed information and public transit routes to selected locations
 
-Both workflows allow users to quickly access essential information and transportation routes to nearby food resources.
+These tools help users quickly locate accessible food resources in their area.
