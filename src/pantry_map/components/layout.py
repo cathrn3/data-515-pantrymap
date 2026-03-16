@@ -143,11 +143,18 @@ def format_nearby_foodbanks(foodbank_data):
         location = html.escape(str(row_data.get("Location", "")), quote=True)
         address = html.escape(str(row_data.get("Address", "")), quote=True)
         phone = row_data.get("Phone Number")
-        phone_display = html.escape(str(phone), quote=True) if phone else "Not available"
+        phone_str = "" if phone is None else str(phone).strip()
+        if not phone_str or phone_str.lower() in {"nan", "na", "n/a"}:
+            phone_display = "Not available"
+        else:
+            phone_display = html.escape(phone_str, quote=True)
         resource_type = html.escape(str(row_data.get("Food Resource Type", "")), quote=True)
 
-        status = str(row_data.get("Operational Status", "")).strip().lower()
-        if status == "open":
+        raw_status = row_data.get("Operational Status")
+        status = str(raw_status).strip().lower() if raw_status is not None else ""
+        if not status or status in {"nan", "na", "n/a", "unknown"}:
+            status_badge = ""
+        elif status == "open":
             status_badge = (
                 "<span style='background:#dafbe1; color:#1a7f37; padding:2px 7px; border-radius:4px; "
                 "font-size:10px; font-weight:700;'>OPEN</span>"
