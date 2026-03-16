@@ -8,6 +8,8 @@ and defines the callbacks for user interactions like filtering and searching.
 import os
 import sys
 
+import numpy as np
+
 # Add the 'src' directory to the path so that imports work regardless of where you run it
 PROJECT_ROOT = os.path.dirname(os.path.dirname(os.path.dirname(os.path.abspath(__file__))))
 sys.path.append(os.path.join(PROJECT_ROOT, "src"))
@@ -62,6 +64,34 @@ def _selected_labels(checkbox_group):
     return [checkbox_group.labels[idx] for idx in checkbox_group.active]
 
 
+def _safe_calculate_distance(user_lat, user_lon, row_lat, row_lon):
+    """
+    Safely compute distance, returning np.inf for any invalid/missing coordinates.
+    This mirrors the robustness of get_foodbank_mask's internal distance handling.
+    """
+    try:
+        lat1 = float(user_lat)
+        lon1 = float(user_lon)
+        lat2 = float(row_lat)
+        lon2 = float(row_lon)
+    except (TypeError, ValueError):
+        return np.inf
+
+    if not (
+        np.isfinite(lat1)
+        and np.isfinite(lon1)
+        and np.isfinite(lat2)
+        and np.isfinite(lon2)
+    ):
+        return np.inf
+
+    try:
+        return calculate_distance(lat1, lon1, lat2, lon2)
+    except Exception:
+        # If calculate_distance itself fails for any reason, treat distance as infinite
+        return np.inf
+
+
 # 3. Callbacks
 def update():
     """Update the map view and sidebar list based on all active filters."""
@@ -101,9 +131,9 @@ def update():
         and user_location["lon"] is not None
         and not foodbank_df.empty
     ):
-        # Compute distance for all rows once.
+        # Compute distance for all rows once, with robust handling of invalid coordinates.
         distances = foodbank_df.apply(
-            lambda row: calculate_distance(
+            lambda row: _safe_calculate_distance(
                 user_location["lat"],
                 user_location["lon"],
                 row["Latitude"],
