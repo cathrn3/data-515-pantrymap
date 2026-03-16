@@ -14,6 +14,7 @@ from bokeh.layouts import column, row
 from bokeh.models import (
     Div, TextInput, Button, Slider, RadioButtonGroup, MultiChoice
 )
+import re
 
 def is_open_today(hours_str):
     """
@@ -262,6 +263,89 @@ def format_nearby_foodbanks(foodbank_data):
         )
 
     return "<div style='padding-right:6px;'>" + "".join(cards) + "</div>"
+
+
+def _chip(content, bg_color, text_color="#ffffff", extra_style=""):
+    return (
+        f"<span style='display:inline-flex; flex-direction:column; align-items:center; "
+        f"padding:6px 12px; border-radius:20px; background:{bg_color}; color:{text_color}; "
+        f"font-size:12px; font-weight:600; white-space:nowrap; {extra_style}'>"
+        f"{content}</span>"
+    )
+
+
+_ARROW = "<span style='color:#6a737d; font-size:12px; padding:0 4px;'>&#x2192;</span>"
+
+
+_HEX_COLOR_RE = re.compile(r"^#([0-9a-f]{3}|[0-9a-f]{6})$", re.IGNORECASE)
+
+
+def _normalize_hex_color(value, default="#374151"):
+    """
+    Normalize a CSS hex color value.
+
+    Accepts #RGB or #RRGGBB; returns `default` if the value is missing or invalid.
+    """
+    if not isinstance(value, str):
+        return default
+    value = value.strip()
+    if not value:
+        return default
+    if not _HEX_COLOR_RE.match(value):
+        return default
+    # Normalize to lowercase for consistency
+    return value.lower()
+
+
+def format_route_display(legs, total_minutes, destination_name):
+    """Format a route leg list as an HTML horizontal chip timeline for results_div.
+
+    Args:
+        legs (list[dict]): Leg dicts from get_route_to_destination().
+        total_minutes (int): Total estimated travel time in minutes (integer).
+                             This function handles hr/min formatting internally.
+        destination_name (str): Name of the destination food bank.
+
+    Returns:
+        str: HTML string for results_div.
+    """
+    if not legs:
+        return ""
+
+    if total_minutes >= 60:
+        hours = total_minutes // 60
+        mins = total_minutes % 60
+        time_str = f"{hours} hr {mins} min" if mins else f"{hours} hr"
+    else:
+        time_str = f"{total_minutes} min"
+
+    dest = html.escape(str(destination_name), quote=True)
+    header = (
+        f"<div style='font-size:13px; font-weight:700; color:#24292f; margin-bottom:8px;'>"
+        f"To {dest} &mdash; Estimated time: {time_str}</div>"
+    )
+
+    chips = []
+    for leg in legs:
+        leg_type = leg["type"]
+        if chips:
+            chips.append(_ARROW)
+        if leg_type == "walk":
+            chips.append(_chip("Walk", "#f0f0f0", text_color="#24292f"))
+        elif leg_type == "bus":
+            raw_color = leg.get("color")
+            color = _normalize_hex_color(raw_color, default="#374151")
+            short = html.escape(str(leg["short_name"]), quote=True)
+            chips.append(_chip(short, color))
+
+    chips.append(_ARROW)
+    chips.append(_chip("Arrive", "#f0f0f0", text_color="#24292f"))
+
+    timeline = (
+        "<div style='display:flex; align-items:center; flex-wrap:wrap; gap:2px; "
+        "padding:4px 0;'>" + "".join(chips) + "</div>"
+    )
+    return "<div style='padding:6px 0;'>" + header + timeline + "</div>"
 
 
 def create_header():
