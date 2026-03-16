@@ -1,3 +1,10 @@
+"""
+Main script for transit data preprocessing.
+
+This script coordinates the loading, cleaning, and filtering of transit data,
+ultimately saving the cleaned stop information to a CSV file.
+"""
+
 from transit_preprocessing import (
     load_transit_data,
     clean_stops,
@@ -7,11 +14,15 @@ from transit_preprocessing import (
 )
 
 def main():
-    # 1️⃣ Set GTFS folder path
+    """
+    Execute the transit preprocessing workflow.
+    """
+    # 1. Set GTFS folder path
     gtfs_folder = "data/sound_transit"  # change if needed
 
     print("Loading transit data...")
-    stops, routes, trips, stop_times, calendar = load_transit_data(gtfs_folder)
+    # load_transit_data returns (stops, routes, trips, stop_times, calendar, shapes)
+    stops, routes, trips, stop_times, calendar, _ = load_transit_data(gtfs_folder)
 
     print("Cleaning stops...")
     stops = clean_stops(stops)
