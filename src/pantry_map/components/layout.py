@@ -1,7 +1,7 @@
 """Layout components for the PantryMap Bokeh application."""
 
 import html
-from bokeh.layouts import column, row
+from bokeh.layouts import column, row, Spacer
 from bokeh.models import Div, TextInput, Button, Slider, CheckboxGroup, RadioButtonGroup
 from pantry_map.utilities.constants import COLORS
 
@@ -190,26 +190,35 @@ def format_nearby_foodbanks(foodbank_data):
 
 def create_header():
     """Create page header."""
-    return Div(
+    header_content = Div(
         text=f"""
-        <div style="background: {COLORS['bg']}; border-bottom: 1px solid {COLORS['border']}; padding: 26px 24px 20px; width:100%;">
-            <div style="max-width: 1700px; margin: 0 auto; width:100%;">
-                <div style="display:flex; justify-content:center; align-items:center; width:100%; text-align:center;">
-                    <div style="margin:0 auto;">
-                        <h1 style="margin: 0 0 8px 0; font-size: 32px; font-weight: 600; color: {COLORS['text_primary']}; letter-spacing: -0.5px;">
-                            PantryMap
-                        </h1>
-                        <p style="margin: 0; font-size: 14px; color: {COLORS['text_secondary']}; font-weight: 400;">
-                            Food bank accessibility and public transit network
-                        </p>
-                        <p style="margin:6px 0 0; font-size:12px; color: {COLORS['text_tertiary']};">Updated today</p>
-                    </div>
-                </div>
-            </div>
+        <div style="padding: 26px 0 20px; text-align:center;">
+            <h1 style="margin: 0 0 8px 0; font-size: 32px; font-weight: 600; color: {COLORS['text_primary']}; letter-spacing: -0.5px; text-align:center;">
+                PantryMap
+            </h1>
+            <p style="margin: 0; font-size: 14px; color: {COLORS['text_secondary']}; font-weight: 400; text-align:center;">
+                Food bank accessibility and public transit network
+            </p>
+            <p style="margin:6px 0 0; font-size:12px; color: {COLORS['text_tertiary']}; text-align:center;">Updated today</p>
         </div>
         """,
+        width=620,
         sizing_mode="stretch_width",
-        styles={"width": "100%"},
+        styles={"display": "block", "text-align": "center"},
+    )
+
+    return column(
+        row(
+            Spacer(sizing_mode="stretch_width"),
+            header_content,
+            Spacer(sizing_mode="stretch_width"),
+            sizing_mode="stretch_width",
+        ),
+        sizing_mode="stretch_width",
+        styles={
+            "background": COLORS["bg"],
+            "border-bottom": f"1px solid {COLORS['border']}",
+        },
     )
 
 
