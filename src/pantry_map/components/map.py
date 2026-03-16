@@ -57,7 +57,7 @@ def create_map(foodbank_df):
         y_axis_type="mercator",
         width=1000,
         height=550,
-        tools="pan,wheel_zoom,box_zoom,reset,save",
+        tools="pan,wheel_zoom,box_zoom,reset,save,tap",
         active_scroll="wheel_zoom",
         toolbar_location="above",
         background_fill_color="#fafbfc",
@@ -82,12 +82,73 @@ def add_markers(fig, source, view=None):
     )
 
 
-def add_routes(fig, source):
-    """Add transit route polylines."""
-    return fig.multi_line(
+def add_routes(fig, grouped_shapes_source, route_source):
+    """
+    Add multi-line routes to the provided Bokeh figure.
+
+    Args:
+        fig (figure): The Bokeh figure to add routes to.
+        grouped_shapes_source (ColumnDataSource): Data source for transit shape routes.
+        route_source (ColumnDataSource): Data source for the active calculated route.
+    """
+    fig.multi_line(
         xs="x",
         ys="y",
         color="color",
-        source=source,
+        source=grouped_shapes_source,
         line_width=2,
+        alpha=.25
     )
+
+    fig.multi_line(
+        xs="xs",
+        ys="ys",
+        line_color="color",
+        line_width=5,
+        source=route_source
+    )
+
+def update_route(route, foodbank_loc, source, foodbank_highlight_source, route_source):
+    """Update the highlighted food bank marker and draw the transit route."""
+    foodbank_highlight_source.data = {
+        "x": [foodbank_loc[0]],
+        "y": [foodbank_loc[1]]
+    }
+
+    if not route:
+        route_source.data = {"xs": [], "ys": [], "color": []}
+        return
+
+    highlight_df = source[source["unique_key"].isin(route[1:-1])]
+    grouped = highlight_df.groupby("route_id")
+
+    xs = []
+    ys = []
+    colors = []
+
+    # Render each route along the found path
+    for _, group in grouped:
+        # Shapes dataframe is ordered correctly
+        start_idx = group.index.min()
+        end_idx = group.index.max()
+        segment = source.loc[start_idx:end_idx]
+
+        xs.append(segment["x"].tolist())
+        ys.append(segment["y"].tolist())
+        colors.append(segment["color"].iloc[0])
+
+    route_source.data = {
+        "xs": xs,
+        "ys": ys,
+        "color": colors
+    }
+
+def clear_routes(foodbank_highlight_source, foodbank_source, route_source):
+    """Clear the highlighted food bank marker and any drawn route."""
+    foodbank_highlight_source.data = {"x": [], "y": []}
+    foodbank_source.selected.indices = []
+    route_source.data = {
+        "xs": [],
+        "ys": [],
+        "color": []
+    }
