@@ -60,5 +60,15 @@ class TestGeocode(unittest.TestCase):
         self.assertIsNone(lat)
         self.assertIsNone(lon)
 
+    @patch("pantry_map.utilities.utility.Nominatim.geocode")
+    def test_geocode_outside_seattle_bounds(self, mock_geocode):
+        """Address that geocodes outside Seattle bounding box returns None."""
+        mock_location = type("Loc", (), {"latitude": 40.7, "longitude": -74.0})()
+        mock_geocode.return_value = mock_location
+        lat, lon = geocode_address("New York, NY")
+        self.assertIsNone(lat)
+        self.assertIsNone(lon)
+
+
 if __name__ == "__main__":
     unittest.main()

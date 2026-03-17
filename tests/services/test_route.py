@@ -196,3 +196,11 @@ class TestCalculateRoute(unittest.TestCase):
         self.assertIsNone(est_time)
         self.assertIsNone(route)
         self.assertIsNone(legs)
+
+    def test_unknown_food_bank(self):
+        """Unknown food bank ID should return None."""
+        self.route_calculator.set_user_location((47.59, -122.33))
+        est_time, route, legs = self.route_calculator.get_route_to_destination("foodbank0")
+        self.assertIsNone(est_time)
+        self.assertIsNone(route)
+        self.assertIsNone(legs)

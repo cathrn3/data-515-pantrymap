@@ -1,7 +1,9 @@
 """Unit tests for distance calculations."""
 import unittest
 import pandas as pd
-from pantry_map.utilities.utility import find_nearest_foodbanks
+from pantry_map.utilities.utility import (
+    find_nearest_foodbanks, color_from_id, lat_lon_to_mercator, calculate_distance,
+)
 
 class TestNearestFoodbanks(unittest.TestCase):
     """Unit tests for calculating distances and finding nearest food banks."""
@@ -10,7 +12,7 @@ class TestNearestFoodbanks(unittest.TestCase):
         """Create a tiny mock foodbank DataFrame for testing."""
         self.foodbanks = pd.DataFrame({
             'Name': ['A', 'B', 'C'],
-            'Latitude': [0, 0, 1],   
+            'Latitude': [0, 0, 1],
             'Longitude': [0, 1, 0]
         })
 
@@ -40,3 +42,30 @@ class TestNearestFoodbanks(unittest.TestCase):
         nearest = find_nearest_foodbanks(df_with_nans, 0, 0, k=5)
         self.assertEqual(len(nearest), 1)
         self.assertEqual(nearest.iloc[0]['Name'], 'Valid')
+
+
+class TestUtilityFunctions(unittest.TestCase):
+    """Tests for color_from_id, lat_lon_to_mercator, and calculate_distance."""
+
+    def test_color_from_id(self):
+        """Deterministic hex color; different IDs differ; int/str same."""
+        c1 = color_from_id("route_42")
+        self.assertTrue(c1.startswith("#") and len(c1) == 7)
+        self.assertEqual(c1, color_from_id("route_42"))  # deterministic
+        self.assertNotEqual(c1, color_from_id("route_99"))
+        self.assertEqual(color_from_id(123), color_from_id("123"))
+
+    def test_lat_lon_to_mercator(self):
+        """Origin maps to (0, 0); Seattle coords give reasonable Mercator values."""
+        x, y = lat_lon_to_mercator(0, 0)
+        self.assertAlmostEqual(x, 0, places=1)
+        self.assertAlmostEqual(y, 0, places=1)
+        sx, sy = lat_lon_to_mercator(47.6, -122.33)
+        self.assertTrue(-14_000_000 < sx < -13_000_000)
+        self.assertTrue(5_000_000 < sy < 7_000_000)
+
+    def test_calculate_distance(self):
+        """Same point is 0; known pair gives expected miles."""
+        self.assertEqual(calculate_distance(47.6, -122.3, 47.6, -122.3), 0)
+        dist = calculate_distance(47.6, -122.3, 47.7, -122.3)
+        self.assertTrue(6 < dist < 8)  # ~6.9 miles
