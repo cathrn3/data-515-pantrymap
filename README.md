@@ -66,9 +66,9 @@
    ```
 
 3. **Install pantry map package**
-```bash
+   ```bash
    pip install -e .
-```
+   ```
 
 4. **Run the application:**
    ```bash
