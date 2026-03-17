@@ -57,16 +57,20 @@
 
 2. **Set up the environment:**
    ```bash
-   conda env create -f environment.yml
-   conda activate pantrymap
+   conda env create -n <env name> -f environment.yml
+   conda activate <env name>
    ```
    *Or using pip:*
    ```bash
    pip install -r requirements.txt
-   pip install -e .
    ```
 
-3. **Run the application:**
+3. **Install pantry map package**
+```bash
+   pip install -e .
+```
+
+4. **Run the application:**
    ```bash
    bokeh serve src/pantry_map/main.py --show
    ```
