@@ -2,6 +2,14 @@ import unittest
 from unittest.mock import patch
 from geopy.exc import GeocoderTimedOut, GeocoderServiceError
 from pantry_map.utilities.utility import validate_address, geocode_address
+from unittest.mock import patch, MagicMock
+
+# Mocked location object
+def mock_location(lat, lon):
+    m = MagicMock()
+    m.latitude = lat
+    m.longitude = lon
+    return m
 
 class TestAddressValidation(unittest.TestCase):
     """Unit tests for the validate_address function."""
@@ -26,9 +34,12 @@ class TestAddressValidation(unittest.TestCase):
 class TestGeocode(unittest.TestCase):
     """Unit tests for the geocode_address function."""
 
-    def test_known_location(self):
+    @patch("pantry_map.utilities.utility.Nominatim.geocode")
+    def test_known_location(self, mock_geocode):
         """Test that a known location returns valid latitude and longitude."""
         
+        mock_geocode.return_value = mock_location(47.6083, -122.3355)
+
         lat, lon = geocode_address("85 Pike St. Seattle WA")
         self.assertIsNotNone(lat)
         self.assertIsNotNone(lon)
@@ -36,8 +47,12 @@ class TestGeocode(unittest.TestCase):
         self.assertTrue(-123.0 <= lon <= -121.5)
         print(lat, lon)
 
-    def test_invalid_location(self):
+    @patch("pantry_map.utilities.utility.Nominatim.geocode")
+    def test_invalid_location(self, mock_geocode):
         """Test that an invalid address returns None."""
+        
+        mock_geocode.return_value = None
+        
         lat, lon = geocode_address("ThisAddressDoesNotExistXYZ")
         self.assertIsNone(lat)
         self.assertIsNone(lon)
@@ -49,7 +64,6 @@ class TestGeocode(unittest.TestCase):
         lat, lon = geocode_address("Some Address")
         self.assertIsNone(lat)
         self.assertIsNone(lon)
-        # Should have tried twice due to the loop in utility.py
         self.assertEqual(mock_geocode.call_count, 2)
 
     @patch("pantry_map.utilities.utility.Nominatim.geocode")
