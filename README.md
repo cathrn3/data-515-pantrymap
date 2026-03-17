@@ -6,9 +6,6 @@
 [![Coverage Status](https://coveralls.io/repos/github/cathrn3/data-515-pantrymap/badge.svg?branch=main)](https://coveralls.io/github/cathrn3/data-515-pantrymap?branch=main)
 
 
-## Project Title
-**PantryMap: Accessible Food Bank Locator**
-
 **PantryMap** is a research-driven tool designed to improve emergency food accessibility in Seattle. By integrating food bank data with public transportation schedules, we aim to bridge the gap between food resources and the communities that need them most.
 
 ---
