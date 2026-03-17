@@ -50,6 +50,13 @@ class CalculateRoute:  # pylint: disable=too-many-instance-attributes
         self.food_bank_coords = np.radians(self.food_bank_df[['Latitude','Longitude']])
         self.food_bank_tree = BallTree(self.food_bank_coords, metric='haversine')
 
+        self._route_lookup = (
+            self.transit_df
+            .drop_duplicates(subset="unique_key")
+            .set_index("unique_key")[["route_short_name", "color"]]
+            .to_dict("index")
+        )
+
     def _initialize_graph(self):
         """
         Connect bus stops within each route and connect all available transfers between routes
@@ -155,19 +162,6 @@ class CalculateRoute:  # pylint: disable=too-many-instance-attributes
         """
         food_bank_ids = set(self.food_bank_df["bank_id"].values)
 
-        # Lazily build a lookup from unique_key -> {"route_short_name": ..., "color": ...}
-        # to avoid repeated boolean indexing and to handle missing keys safely.
-        if not hasattr(self, "_route_lookup"):
-            try:
-                self._route_lookup = (
-                    self.transit_df
-                    .set_index("unique_key")[["route_short_name", "color"]]
-                    .to_dict("index")
-                )
-            except Exception:  # pylint: disable=broad-exception-caught
-                # Fallback if transit_df is missing expected columns
-                self._route_lookup = {}
-
         # Classify each edge as "walk" or a (short_name, info) tuple
         classified = []
         for node_a, node_b in zip(route, route[1:]):
@@ -180,16 +174,8 @@ class CalculateRoute:  # pylint: disable=too-many-instance-attributes
                 classified.append(("walk", None))
             else:
                 route_info = self._route_lookup.get(node_a)
-                # If no route info is found, treat this edge as a walk/transfer leg
-                if not route_info:
-                    classified.append(("walk", None))
-                else:
-                    short_name = route_info.get("route_short_name")
-                    if not short_name:
-                        # Missing short name: fall back to walk to avoid breaking routing
-                        classified.append(("walk", None))
-                    else:
-                        classified.append((short_name, route_info))
+                short_name = route_info.get("route_short_name")
+                classified.append((short_name, route_info))
 
         # Group consecutive same-label edges into legs
         legs = []
@@ -198,17 +184,8 @@ class CalculateRoute:  # pylint: disable=too-many-instance-attributes
                 legs.append({"type": "walk"})
             else:
                 _, first_row = next(group)
-                # Safely extract color; default to None if unavailable
-                color = None
-                if first_row is not None:
-                    try:
-                        color = (
-                            first_row.get("color")
-                            if hasattr(first_row, "get")
-                            else first_row["color"]
-                        )
-                    except Exception:  # pylint: disable=broad-exception-caught
-                        color = None
+                # Color should be defined
+                color = first_row["color"]
                 legs.append({
                     "type": "bus",
                     "short_name": short_name,
