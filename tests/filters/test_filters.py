@@ -1,4 +1,8 @@
+"""Tests for food bank filtering masks."""
+import datetime as dt
 import unittest
+from unittest.mock import patch
+
 import pandas as pd
 
 from pantry_map.filters.mask import get_foodbank_mask
@@ -62,7 +66,7 @@ class TestFoodbankFilters(unittest.TestCase):
         self.assertEqual(mask.tolist(), [True, True, True, True])
 
     def test_empty_eligibility_and_days_with_open_only(self):
-        # When both eligibility and days are empty, only open_only (including current_day) should apply
+        # Empty eligibility + days: only open_only should apply
         mask = get_foodbank_mask(
             self.df,
             open_only=True,
@@ -92,6 +96,46 @@ class TestFoodbankFilters(unittest.TestCase):
             current_day="Friday",
         )
         self.assertEqual(mask.tolist(), [False, False, False, True])
+
+
+    def test_open_only_auto_detects_current_day(self):
+        """open_only=True with current_day=None should use datetime.now()."""
+        fake_now = dt.datetime(2026, 3, 18, 12, 0)  # Wednesday
+        with patch("pantry_map.filters.mask.datetime") as mock_dt:
+            mock_dt.now.return_value = fake_now
+            mask = get_foodbank_mask(self.df, open_only=True, current_day=None)
+        self.assertTrue(mask[0])   # row 0: Open + "Monday, Wednesday"
+        self.assertFalse(mask[1])  # row 1: Closed
+
+    def test_eligibility_youth(self):
+        """'Youth' filter matches rows with youth/children/teen/student."""
+        df = pd.DataFrame({
+            "Food Resource Type": ["Food Bank", "Food Bank"],
+            "Operational Status": ["Open", "Open"],
+            "Who They Serve": ["youth programs", "General Public"],
+            "Days/Hours": ["Monday", "Monday"],
+            "Latitude": [47.6, 47.6],
+            "Longitude": [-122.3, -122.3],
+        })
+        mask = get_foodbank_mask(df, selected_eligibility=["Youth"])
+        self.assertTrue(mask[0])
+        self.assertFalse(mask[1])
+
+    def test_distance_mask_with_bad_coords(self):
+        """Rows with non-numeric or NaN coords should be excluded by distance filter."""
+        df = pd.DataFrame({
+            "Food Resource Type": ["Food Bank"] * 4,
+            "Operational Status": ["Open"] * 4,
+            "Who They Serve": ["General Public"] * 4,
+            "Days/Hours": ["Monday"] * 4,
+            "Latitude": [47.60, "bad", None, float("nan")],
+            "Longitude": [-122.33, -122.33, -122.33, -122.33],
+        })
+        mask = get_foodbank_mask(df, user_lat=47.60, user_lon=-122.33, max_distance_miles=10)
+        self.assertTrue(mask[0])
+        self.assertFalse(mask[1])   # "bad" string
+        self.assertFalse(mask[2])   # None
+        self.assertFalse(mask[3])   # NaN (passes float() but fails isfinite)
 
 
 if __name__ == "__main__":
