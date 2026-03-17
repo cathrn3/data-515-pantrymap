@@ -27,6 +27,7 @@ class CalculateRoute:  # pylint: disable=too-many-instance-attributes
     WALKING_SPEED = 2 # Assumed walking speed at 2 MPH
 
     def __init__(self, food_bank_df, transit_df, transfers_df):
+        self._route_lookup = {}
         self.user_location = None
         # Filter out food banks without valid coordinates so that indices from the
         # BallTree correspond directly to rows in self.food_bank_df.
@@ -48,6 +49,13 @@ class CalculateRoute:  # pylint: disable=too-many-instance-attributes
         # ensuring that returned indices can be safely applied with .iloc on self.food_bank_df.
         self.food_bank_coords = np.radians(self.food_bank_df[['Latitude','Longitude']])
         self.food_bank_tree = BallTree(self.food_bank_coords, metric='haversine')
+
+        self._route_lookup = (
+            self.transit_df
+            .drop_duplicates(subset="unique_key")
+            .set_index("unique_key")[["route_short_name", "color"]]
+            .to_dict("index")
+        )
 
     def _initialize_graph(self):
         """
@@ -138,7 +146,7 @@ class CalculateRoute:  # pylint: disable=too-many-instance-attributes
             new_graph.add_edge(stop_id, food_bank_id, weight=estimated_time)
         return new_graph
 
-    def _build_legs(self, route):
+    def _build_legs(self, route):  # pylint: disable=too-many-branches
         """Reconstruct leg sequence from a node path returned by Dijkstra.
 
         Each edge is classified as "walk" (USER node or food bank destination)
@@ -154,18 +162,6 @@ class CalculateRoute:  # pylint: disable=too-many-instance-attributes
         """
         food_bank_ids = set(self.food_bank_df["bank_id"].values)
 
-        # Lazily build a lookup from unique_key -> {"route_short_name": ..., "color": ...}
-        # to avoid repeated boolean indexing and to handle missing keys safely.
-        if not hasattr(self, "_route_lookup"):
-            try:
-                self._route_lookup = (
-                    self.transit_df
-                    .set_index("unique_key")[["route_short_name", "color"]]
-                    .to_dict("index")
-                )
-            except Exception:  # Fallback if transit_df is missing expected columns
-                self._route_lookup = {}
-
         # Classify each edge as "walk" or a (short_name, info) tuple
         classified = []
         for node_a, node_b in zip(route, route[1:]):
@@ -178,35 +174,18 @@ class CalculateRoute:  # pylint: disable=too-many-instance-attributes
                 classified.append(("walk", None))
             else:
                 route_info = self._route_lookup.get(node_a)
-                # If no route info is found, treat this edge as a walk/transfer leg
-                if not route_info:
-                    classified.append(("walk", None))
-                else:
-                    short_name = route_info.get("route_short_name")
-                    if not short_name:
-                        # Missing short name: fall back to walk to avoid breaking routing
-                        classified.append(("walk", None))
-                    else:
-                        classified.append((short_name, route_info))
+                short_name = route_info.get("route_short_name")
+                classified.append((short_name, route_info))
 
         # Group consecutive same-label edges into legs
         legs = []
-        for short_name, group in groupby(classified, key=lambda x: x[0]):
+        for short_name, group in groupby(classified, key=lambda x: x[0]): # pylint: disable=too-many-branches
             if short_name == "walk":
                 legs.append({"type": "walk"})
             else:
                 _, first_row = next(group)
-                # Safely extract color; default to None if unavailable
-                color = None
-                if first_row is not None:
-                    try:
-                        color = (
-                            first_row.get("color")
-                            if hasattr(first_row, "get")
-                            else first_row["color"]
-                        )
-                    except Exception:
-                        color = None
+                # Color should be defined
+                color = first_row["color"]
                 legs.append({
                     "type": "bus",
                     "short_name": short_name,
