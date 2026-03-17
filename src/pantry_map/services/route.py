@@ -27,6 +27,7 @@ class CalculateRoute:  # pylint: disable=too-many-instance-attributes
     WALKING_SPEED = 2 # Assumed walking speed at 2 MPH
 
     def __init__(self, food_bank_df, transit_df, transfers_df):
+        self._route_lookup = {}
         self.user_location = None
         # Filter out food banks without valid coordinates so that indices from the
         # BallTree correspond directly to rows in self.food_bank_df.
@@ -145,7 +146,7 @@ class CalculateRoute:  # pylint: disable=too-many-instance-attributes
             new_graph.add_edge(stop_id, food_bank_id, weight=estimated_time)
         return new_graph
 
-    def _build_legs(self, route):
+    def _build_legs(self, route):  # pylint: disable=too-many-branches
         """Reconstruct leg sequence from a node path returned by Dijkstra.
 
         Each edge is classified as "walk" (USER node or food bank destination)
@@ -178,7 +179,7 @@ class CalculateRoute:  # pylint: disable=too-many-instance-attributes
 
         # Group consecutive same-label edges into legs
         legs = []
-        for short_name, group in groupby(classified, key=lambda x: x[0]):
+        for short_name, group in groupby(classified, key=lambda x: x[0]): # pylint: disable=too-many-branches
             if short_name == "walk":
                 legs.append({"type": "walk"})
             else:

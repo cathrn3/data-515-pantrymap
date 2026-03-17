@@ -1,3 +1,4 @@
+"""Unit tests for distance calculations."""
 import unittest
 import pandas as pd
 from pantry_map.utilities.utility import (
@@ -11,7 +12,7 @@ class TestNearestFoodbanks(unittest.TestCase):
         """Create a tiny mock foodbank DataFrame for testing."""
         self.foodbanks = pd.DataFrame({
             'Name': ['A', 'B', 'C'],
-            'Latitude': [0, 0, 1],   
+            'Latitude': [0, 0, 1],
             'Longitude': [0, 1, 0]
         })
 
